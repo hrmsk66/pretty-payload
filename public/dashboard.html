@@ -1,0 +1,49 @@
+<!-- public/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Request Log Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Add Google Fonts - optional -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>Pretty Payload</h1>
+    </header>
+
+    <main class="dashboard">
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h2>Request History</h2>
+        </div>
+        <div class="log-list" id="log-list">
+          <!-- Log list is dynamically inserted by JavaScript -->
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="tabs">
+          <button class="tab-button active" data-tab="body">Body</button>
+          <button class="tab-button" data-tab="headers">Headers</button>
+        </div>
+
+        <div class="tab-content">
+          <div class="tab-pane active" id="body-pane">
+            <pre id="json-viewer" class="json-viewer"></pre>
+          </div>
+          <div class="tab-pane" id="headers-pane">
+            <pre id="headers-viewer" class="json-viewer"></pre>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

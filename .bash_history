@@ -1,0 +1,4 @@
+reload
+restart
+reboot
+exit
