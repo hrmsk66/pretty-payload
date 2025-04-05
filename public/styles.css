@@ -291,6 +291,7 @@ h1::after {
   gap: 10px;
 }
 
+.compressed-badge,
 .size-badge,
 .time-badge {
   background-color: #f0f0fa;
@@ -310,15 +311,38 @@ h1::after {
   background-color: rgba(46, 174, 219, 0.1);
 }
 
-/* Remove status-badge styles */
-/* .status-badge {
-  color: var(--glitch-green);
-  background-color: rgba(12, 206, 107, 0.1);
-} */
-
 .time-badge {
   color: var(--glitch-pink);
   background-color: rgba(255, 69, 139, 0.1);
+}
+
+/* Compression badge styling */
+.compressed-badge {
+  color: var(--glitch-purple);
+  background-color: rgba(153, 51, 255, 0.1);
+}
+
+/* Decompression notice styling */
+.decompression-notice {
+  color: var(--glitch-green);
+  background-color: rgba(12, 206, 107, 0.1);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-family: var(--glitch-font);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.decompression-error {
+  color: var(--glitch-pink);
+  background-color: rgba(255, 69, 139, 0.1);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-family: var(--glitch-font);
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .content {

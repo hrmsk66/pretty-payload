@@ -4,6 +4,11 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
+const zlib = require('zlib');
+const util = require('util');
+
+// Promisify zlib functions
+const gunzip = util.promisify(zlib.gunzip);
 
 // Array to store request logs (limit to 100 most recent)
 const MAX_LOGS = 1000;
@@ -11,28 +16,53 @@ const requestLogs = [];
 
 // Make sure we get the raw body for all requests
 app.use((req, res, next) => {
-  let data = '';
-  req.setEncoding('utf8');
+  let data = [];
 
   req.on('data', (chunk) => {
-    data += chunk;
+    data.push(chunk);
   });
 
-  req.on('end', () => {
-    req.rawBody = data;
+  req.on('end', async () => {
+    // Convert the chunks to Buffer
+    const buffer = Buffer.concat(data);
+    req.rawBuffer = buffer;
+
+    // Store the raw body as string for display
+    req.rawBody = buffer.toString('utf8');
+
+    // Check if content is gzipped
+    const isGzipped = req.headers['content-encoding'] === 'gzip';
+    req.isCompressed = isGzipped;
+
+    let bodyContent = buffer;
+
+    // Decompress if gzipped
+    if (isGzipped) {
+      try {
+        bodyContent = await gunzip(buffer);
+        // Store the decompressed content as string
+        req.decompressedBody = bodyContent.toString('utf8');
+      } catch (error) {
+        console.error('Failed to decompress gzipped content:', error);
+        req.decompressError = error.message;
+      }
+    }
 
     // If content-type is JSON, try to parse the body
     if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
       try {
-        req.body = JSON.parse(data);
+        // Use decompressed content if available, otherwise use the raw content
+        const contentToProcess =
+          isGzipped && req.decompressedBody ? req.decompressedBody : req.rawBody;
+        req.body = JSON.parse(contentToProcess);
       } catch (error) {
         // If JSON parsing fails, keep the raw body as a string
-        req.body = data;
+        req.body = isGzipped && req.decompressedBody ? req.decompressedBody : req.rawBody;
         console.log('Invalid JSON payload received. Keeping as raw text.');
       }
     } else {
       // For non-JSON content types, keep the raw body
-      req.body = data;
+      req.body = isGzipped && req.decompressedBody ? req.decompressedBody : req.rawBody;
     }
 
     next();
@@ -67,9 +97,9 @@ app.use((req, res, next) => {
 
   // Use raw body for request display (with safety check)
   const bodyStr = req.rawBody || '';
-  const bodySize = Buffer.byteLength(bodyStr, 'utf8');
+  const bodySize = req.rawBuffer ? req.rawBuffer.length : Buffer.byteLength(bodyStr, 'utf8');
 
-  // Create raw request representation
+  // For raw request display, use the raw (compressed) content
   const rawRequest = `${req.method} ${req.path} HTTP/1.1\n${rawHeaders}\n\n${bodyStr}`;
 
   // Capture request data
@@ -83,6 +113,12 @@ app.use((req, res, next) => {
     rawBody: bodyStr,
     bodySize: bodySize,
     rawRequest: rawRequest,
+    isCompressed: req.isCompressed,
+    decompressError: req.decompressError,
+    originalSize:
+      req.isCompressed && req.decompressedBody
+        ? Buffer.byteLength(req.decompressedBody, 'utf8')
+        : bodySize,
   };
 
   // Store logs
@@ -106,6 +142,8 @@ app.get('/api/logs', (req, res) => {
     method: log.method,
     path: log.path,
     bodySize: log.bodySize,
+    isCompressed: log.isCompressed,
+    originalSize: log.originalSize,
     // ヘッダーは残し、ボディは除外
     headers: log.headers,
     // body: log.body は削除
