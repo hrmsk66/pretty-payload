@@ -1,0 +1,201 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Test payload for Pretty Payload visualization",
+    "timestamp": "2023-06-28T09:32:17Z",
+    "isTest": true
+  },
+  "user": {
+    "id": 12345,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "active": true,
+    "preferences": {
+      "theme": "dark",
+      "notifications": {
+        "email": true,
+        "push": false,
+        "sms": null,
+        "frequency": {
+          "daily": true,
+          "weekly": {
+            "enabled": true,
+            "day": "monday",
+            "time": "09:00"
+          },
+          "monthly": false
+        }
+      },
+      "language": "en-US"
+    },
+    "roles": ["user", "admin", "tester"]
+  },
+  "products": [
+    {
+      "id": "p-001",
+      "name": "Product 1",
+      "price": 19.99,
+      "inStock": true,
+      "categories": ["electronics", "gadgets"],
+      "details": {
+        "color": "black",
+        "weight": 0.5,
+        "dimensions": {
+          "width": 10.2,
+          "height": 5.0,
+          "depth": 1.5,
+          "unit": "cm"
+        },
+        "features": [
+          {
+            "name": "Wireless",
+            "supported": true,
+            "specifications": {
+              "range": "10m",
+              "protocols": ["Bluetooth 5.0", "WiFi"],
+              "bands": {
+                "2.4GHz": true,
+                "5GHz": false
+              }
+            }
+          },
+          {
+            "name": "Battery",
+            "supported": true,
+            "specifications": {
+              "type": "Li-ion",
+              "capacity": 3000,
+              "unit": "mAh",
+              "replaceable": false
+            }
+          }
+        ]
+      },
+      "ratings": [4, 5, 3, 5, 4, 5]
+    },
+    {
+      "id": "p-002",
+      "name": "Product 2",
+      "price": 29.99,
+      "inStock": false,
+      "categories": ["home", "kitchen"],
+      "details": {
+        "color": "silver",
+        "weight": 1.2,
+        "dimensions": {
+          "width": 20.0,
+          "height": 15.5,
+          "depth": 8.0,
+          "unit": "cm"
+        },
+        "features": [
+          {
+            "name": "Programmable",
+            "supported": true,
+            "specifications": {
+              "programs": 10,
+              "memory": {
+                "size": 512,
+                "unit": "KB",
+                "persistent": true
+              }
+            }
+          }
+        ]
+      },
+      "ratings": [3, 4, 4, 5, 2]
+    }
+  ],
+  "analytics": {
+    "views": 12542,
+    "conversions": 531,
+    "abandonedCarts": 223,
+    "topSources": [
+      {
+        "name": "direct",
+        "count": 5234,
+        "percentage": 41.73
+      },
+      {
+        "name": "google",
+        "count": 3721,
+        "percentage": 29.67
+      },
+      {
+        "name": "facebook",
+        "count": 2112,
+        "percentage": 16.84
+      }
+    ],
+    "performanceMetrics": {
+      "loadTime": {
+        "average": 1.23,
+        "median": 1.05,
+        "p95": 2.31,
+        "p99": 3.87,
+        "breakdown": {
+          "network": 0.45,
+          "server": 0.32,
+          "rendering": {
+            "html": 0.12,
+            "css": 0.08,
+            "javascript": {
+              "parsing": 0.18,
+              "execution": 0.08,
+              "libraries": [
+                { "name": "jQuery", "time": 0.03 },
+                { "name": "React", "time": 0.14 },
+                { "name": "Other", "time": 0.01 }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "settings": {
+    "cache": true,
+    "timeout": 30000,
+    "retryCount": 3,
+    "specialValues": [null, "N/A", false, 0],
+    "debug": {
+      "enabled": true,
+      "level": "verbose",
+      "includeStackTrace": true,
+      "outputTo": {
+        "console": true,
+        "file": {
+          "enabled": true,
+          "path": "/var/log/app.log",
+          "rotation": {
+            "enabled": true,
+            "maxSize": "10MB",
+            "maxFiles": 5
+          }
+        },
+        "remote": null
+      }
+    }
+  },
+  "emptyObjects": {
+    "emptyArray": [],
+    "emptyObject": {},
+    "mixedEmpty": {
+      "notEmpty": "I have a value",
+      "emptyNested": {
+        "deeperEmpty": {}
+      }
+    }
+  },
+  "specialTypes": {
+    "dates": "2023-06-28T09:32:17.000Z",
+    "bigNumbers": 9007199254740991,
+    "scientificNotation": 1.234e56,
+    "booleans": {
+      "isTrue": true,
+      "isFalse": false,
+      "isNull": null,
+      "isUndefined": null
+    }
+  }
+}

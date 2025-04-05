@@ -85,7 +85,7 @@ app.use((req, res, next) => {
     req.path.startsWith('/styles') ||
     req.path.startsWith('/app.js') ||
     req.path === '/favicon.ico' ||
-    req.path.startsWith('/api/')
+    req.path.startsWith('/pp-api/')
   ) {
     return next();
   }
@@ -134,7 +134,7 @@ app.use((req, res, next) => {
 });
 
 // API to get all request logs
-app.get('/api/logs', (req, res) => {
+app.get('/pp-api/logs', (req, res) => {
   // Sort logs with newest requests first
   const sortedLogs = [...requestLogs].reverse().map((log) => ({
     id: log.id,
@@ -144,23 +144,21 @@ app.get('/api/logs', (req, res) => {
     bodySize: log.bodySize,
     isCompressed: log.isCompressed,
     originalSize: log.originalSize,
-    // ヘッダーは残し、ボディは除外
     headers: log.headers,
-    // body: log.body は削除
   }));
 
   res.json(sortedLogs);
 });
 
 // API to clear all logs
-app.delete('/api/logs', (req, res) => {
+app.delete('/pp-api/logs', (req, res) => {
   // Clear the logs array
   requestLogs.length = 0;
   res.status(200).json({ success: true, message: 'All logs cleared' });
 });
 
 // API to get a specific log by ID
-app.get('/api/logs/:id', (req, res) => {
+app.get('/pp-api/logs/:id', (req, res) => {
   const log = requestLogs.find((log) => log.id === req.params.id);
   if (!log) {
     return res.status(404).json({ error: 'Log not found' });
