@@ -1,14 +1,19 @@
-<!-- public/dashboard.html -->
+<!-- public/dashboard.html - Dashboard view for request payload visualization -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Request Log Dashboard</title>
+    <title>Pretty Payload</title>
     <link rel="stylesheet" href="styles.css" />
-    <!-- Add Google Fonts - optional -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="icon"
+      href="https://cdn.glitch.global/1a8466ea-9b94-4ea4-87d1-d3bf275de595/public%2Ffavicon.ico?v=1743823451421"
+      type="image/x-icon"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -21,6 +26,9 @@
       <div class="sidebar">
         <div class="sidebar-header">
           <h2>Request History</h2>
+          <button id="clear-requests" class="clear-button">
+            Clear Requests
+          </button>
         </div>
         <div class="log-list" id="log-list">
           <!-- Log list is dynamically inserted by JavaScript -->

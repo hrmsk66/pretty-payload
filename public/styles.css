@@ -28,8 +28,10 @@
   --glitch-light: #f5f5ff;
   --glitch-gray: #494b5c;
   --glitch-light-gray: #e0e0e8;
-  --glitch-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --glitch-font: "Inter", "Quicksand", "Poppins", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+    "Open Sans", "Helvetica Neue", sans-serif;
+  --glitch-mono-font: "Monaco", "Consolas", "Liberation Mono", Menlo, monospace;
 }
 
 * {
@@ -56,8 +58,9 @@ header {
 h1 {
   font-size: 1.5rem;
   position: relative;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.5px;
+  font-family: "Poppins", var(--glitch-font);
 }
 
 h1::after {
@@ -121,23 +124,79 @@ h1::after {
 
 .sidebar {
   width: 40%;
+  min-width: 300px;
+  max-width: 500px;
   background-color: white;
   border-right: 1px solid var(--glitch-light-gray);
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 }
 
 .sidebar-header {
   padding: 1rem;
   background: linear-gradient(to right, var(--glitch-light) 0%, white 100%);
   border-bottom: 2px solid var(--glitch-light-gray);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .sidebar-header h2 {
   font-size: 1.2rem;
   color: var(--glitch-dark);
-  font-weight: 700;
+  font-weight: 600;
+  font-family: "Quicksand", var(--glitch-font);
+  letter-spacing: 0.5px;
+}
+
+.clear-button {
+  background-color: var(--glitch-pink);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  font-family: "Quicksand", var(--glitch-font);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(255, 69, 139, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.clear-button:hover {
+  background-color: #ff2d7a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 69, 139, 0.4);
+}
+
+.clear-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(255, 69, 139, 0.3);
+}
+
+/* Shimmer effect for the clear button */
+.clear-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: all 0.6s ease;
+}
+
+.clear-button:hover::before {
+  left: 100%;
 }
 
 .log-list {
@@ -146,21 +205,24 @@ h1::after {
 }
 
 .log-item {
-  padding: 0.6rem 1rem;
+  padding: 0.9rem 1rem;
   border-bottom: 1px solid var(--glitch-light-gray);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   position: relative;
+  background-color: white;
 }
 
 .log-item:hover {
-  background-color: #fcfcff;
-  transform: translateX(2px);
+  background-color: #fafaff;
+  transform: translateX(4px);
+  box-shadow: -4px 0 0 rgba(153, 51, 255, 0.2);
 }
 
 .log-item.active {
   background-color: #f8f8ff;
   border-left: 3px solid var(--glitch-blue);
+  padding-left: calc(1rem - 3px);
 }
 
 .log-item.active::before {
@@ -176,41 +238,40 @@ h1::after {
 
 .log-method {
   display: inline-block;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
   font-size: 0.75rem;
-  font-weight: bold;
+  font-weight: 600;
+  font-family: "Poppins", var(--glitch-font);
   color: white;
   margin-right: 0.5rem;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
+/* HTTP method badges styling */
 .log-method.post {
-  background-color: var(--glitch-green);
-  box-shadow: 0 2px 3px rgba(12, 206, 107, 0.3);
+  background: linear-gradient(135deg, var(--glitch-green), #09b35f);
 }
 
 .log-method.get {
-  background-color: var(--glitch-blue);
-  box-shadow: 0 2px 3px rgba(46, 174, 219, 0.3);
+  background: linear-gradient(135deg, var(--glitch-blue), #1a9ccd);
 }
 
 .log-method.put {
-  background-color: var(--glitch-yellow);
-  box-shadow: 0 2px 3px rgba(255, 204, 0, 0.3);
+  background: linear-gradient(135deg, var(--glitch-yellow), #e0b400);
   color: #333;
 }
 
 .log-method.delete {
-  background-color: var(--glitch-pink);
-  box-shadow: 0 2px 3px rgba(255, 69, 139, 0.3);
+  background: linear-gradient(135deg, var(--glitch-pink), #ff2d7a);
 }
 
 .log-path {
-  font-weight: bold;
+  font-weight: 600;
   display: inline;
   margin-right: 0.5rem;
-  font-family: "Monaco", "Consolas", monospace;
+  font-family: var(--glitch-mono-font);
   color: var(--glitch-dark);
 }
 
@@ -231,20 +292,29 @@ h1::after {
 .time-badge {
   background-color: #f0f0fa;
   padding: 3px 8px;
-  border-radius: 4px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  position: relative;
 }
 
 .size-badge {
-  border-left: 3px solid var(--glitch-blue);
+  color: var(--glitch-blue);
+  background-color: rgba(46, 174, 219, 0.1);
 }
 
 .status-badge {
-  border-left: 3px solid var(--glitch-green);
+  color: var(--glitch-green);
+  background-color: rgba(12, 206, 107, 0.1);
 }
 
 .time-badge {
-  border-left: 3px solid var(--glitch-yellow);
+  color: var(--glitch-pink);
+  background-color: rgba(255, 69, 139, 0.1);
 }
 
 .content {
@@ -252,6 +322,7 @@ h1::after {
   display: flex;
   flex-direction: column;
   background-color: white;
+  min-width: 0; /* Important: prevents flex items from expanding beyond their container */
 }
 
 .tabs {
@@ -266,10 +337,12 @@ h1::after {
   background-color: transparent;
   cursor: pointer;
   font-weight: 600;
+  font-family: "Poppins", var(--glitch-font);
   color: var(--glitch-gray);
   transition: all 0.2s;
   position: relative;
   letter-spacing: 0.5px;
+  overflow: hidden;
 }
 
 .tab-button:hover {
@@ -277,11 +350,8 @@ h1::after {
   background-color: rgba(153, 51, 255, 0.05);
 }
 
-.tab-button.active {
-  color: var(--glitch-purple);
-}
-
-.tab-button.active::after {
+/* Animated underline effect for tabs */
+.tab-button::after {
   content: "";
   position: absolute;
   bottom: 0;
@@ -294,6 +364,24 @@ h1::after {
     var(--glitch-pink)
   );
   border-radius: 3px 3px 0 0;
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease;
+  opacity: 0.7;
+}
+
+.tab-button:hover::after {
+  transform: scaleX(0.7);
+  transform-origin: bottom left;
+}
+
+.tab-button.active {
+  color: var(--glitch-purple);
+}
+
+.tab-button.active::after {
+  transform: scaleX(1);
+  opacity: 1;
 }
 
 .tab-content {
@@ -323,16 +411,8 @@ h1::after {
   }
 }
 
-.log-item {
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid var(--glitch-light-gray);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
 .json-viewer {
-  font-family: "Monaco", "Consolas", "Liberation Mono", Menlo, monospace;
+  font-family: var(--glitch-mono-font);
   white-space: pre-wrap;
   font-size: 0.9rem;
   line-height: 1.5;
@@ -342,8 +422,12 @@ h1::after {
   background-color: #fafafa;
   border-radius: 6px;
   border: 1px solid var(--glitch-light-gray);
+  overflow-x: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+/* JSON syntax highlighting */
 .key {
   color: var(--glitch-pink);
 }
@@ -367,7 +451,7 @@ h1::after {
 /* Headers styling */
 .header-line {
   padding: 6px 0;
-  font-family: "Monaco", "Consolas", "Liberation Mono", Menlo, monospace;
+  font-family: var(--glitch-mono-font);
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -401,7 +485,6 @@ h1::after {
 .empty-state p:first-child {
   font-size: 1.2rem;
   font-weight: 600;
+  font-family: "Quicksand", var(--glitch-font);
   margin-bottom: 1rem;
 }
-
-/* This section was moved to the top of the file */

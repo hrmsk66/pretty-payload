@@ -1,4 +1,4 @@
-// public/app.js
+// public/app.js - Frontend client for the dashboard
 document.addEventListener("DOMContentLoaded", () => {
   // DOM elements
   const logListElement = document.getElementById("log-list");
@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const headersViewerElement = document.getElementById("headers-viewer");
   const tabButtons = document.querySelectorAll(".tab-button");
   const tabPanes = document.querySelectorAll(".tab-pane");
+  const clearRequestsButton = document.getElementById("clear-requests");
 
   // Currently selected log ID
   let selectedLogId = null;
@@ -41,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
           logListElement.innerHTML = `
             <div class="empty-state">
               <p>No requests yet</p>
-              <p>Send data to POST /metrics</p>
+              <p>Send any POST request to the server</p>
             </div>
           `;
           return;
@@ -55,8 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
           const logItem = document.createElement("div");
           logItem.className = "log-item";
           logItem.setAttribute("data-id", log.id);
-
-          // Animation removed
 
           const timestamp = new Date(log.timestamp);
           const formattedTime = timestamp.toLocaleTimeString();
@@ -108,8 +107,6 @@ document.addEventListener("DOMContentLoaded", () => {
             selectedItem.classList.add("active");
           }
         }
-
-        // Animation removed
       })
       .catch((error) => {
         console.error("Error fetching logs:", error);
@@ -130,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((response) => response.json())
       .then((log) => {
         // Display body in JSON viewer
-        jsonViewerElement.innerHTML = formatJSON(log.body);
+        jsonViewerElement.innerHTML = formatJSON(normalizeJsonObject(log.body));
 
         // Display headers in headers viewer
         headersViewerElement.innerHTML = formatJSON(log.headers);
@@ -142,128 +139,183 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // Function removed - no animation effects needed
+  // Normalize objects that may have been double JSON-encoded
+  function normalizeJsonObject(obj) {
+    // Return non-objects as is
+    if (obj === null || typeof obj !== "object") {
+      return obj;
+    }
 
-  // Format and colorize JSON function
-  function formatJSON(obj) {
-    // Create a pre-formatted version with proper indentation
-    const jsonString = JSON.stringify(obj, null, 2);
-
-    // Create a safe version with HTML entities
-    let safeHTML = "";
-
-    // Manually handle each character to avoid regex issues
-    let inString = false;
-    let currentKeyContent = "";
-    let isKey = false;
-
-    for (let i = 0; i < jsonString.length; i++) {
-      const char = jsonString[i];
-      const nextChar = jsonString[i + 1] || "";
-
-      // Handle string quotes
-      if (char === '"') {
-        if (!inString) {
-          // Starting a string
-          inString = true;
-          // Check if this is likely a key (followed by a colon)
-          let j = i + 1;
-          while (
-            j < jsonString.length &&
-            jsonString[j] !== '"' &&
-            jsonString[j] !== "\n"
-          )
-            j++;
-
-          // If we find a quote and then a colon, it's a key
-          isKey =
-            j < jsonString.length - 1 &&
-            jsonString[j] === '"' &&
-            jsonString
-              .substring(j + 1)
-              .trim()
-              .startsWith(":");
-
-          if (isKey) {
-            safeHTML += '<span class="key">"';
-            currentKeyContent = "";
-          } else {
-            safeHTML += '<span class="string">"';
-          }
-        } else {
-          // Ending a string
-          inString = false;
-          if (isKey) {
-            safeHTML += '"</span>';
-            isKey = false;
-          } else {
-            safeHTML += '"</span>';
-          }
+    // Special case: object with a single key that looks like a JSON string
+    const keys = Object.keys(obj);
+    if (keys.length === 1 && keys[0].includes('"') && keys[0].length > 50) {
+      try {
+        // Check if the key itself is a JSON string
+        const parsedKey = JSON.parse(keys[0]);
+        if (typeof parsedKey === "object" && parsedKey !== null) {
+          // If the key is a JSON object, return it
+          return parsedKey;
         }
-      }
-      // Handle special HTML characters
-      else if (char === "<") {
-        safeHTML += "&lt;";
-      } else if (char === ">") {
-        safeHTML += "&gt;";
-      } else if (char === "&") {
-        safeHTML += "&amp;";
-      }
-      // Handle boolean values
-      else if (
-        !inString &&
-        ((char === "t" && jsonString.substr(i, 4) === "true") ||
-          (char === "f" && jsonString.substr(i, 5) === "false"))
-      ) {
-        const word = char === "t" ? "true" : "false";
-        safeHTML += `<span class="boolean">${word}</span>`;
-        i += word.length - 1; // Skip the rest of the word
-      }
-      // Handle null
-      else if (
-        !inString &&
-        char === "n" &&
-        jsonString.substr(i, 4) === "null"
-      ) {
-        safeHTML += '<span class="null">null</span>';
-        i += 3; // Skip the rest of the word
-      }
-      // Handle numbers
-      else if (!inString && ((char >= "0" && char <= "9") || char === "-")) {
-        let numStr = char;
-        let j = i + 1;
-        while (
-          j < jsonString.length &&
-          ((jsonString[j] >= "0" && jsonString[j] <= "9") ||
-            jsonString[j] === "." ||
-            jsonString[j] === "e" ||
-            jsonString[j] === "E" ||
-            jsonString[j] === "+" ||
-            jsonString[j] === "-")
-        ) {
-          numStr += jsonString[j];
-          j++;
-        }
-
-        // Only handle as number if it's valid
-        if (!isNaN(parseFloat(numStr))) {
-          safeHTML += `<span class="number">${numStr}</span>`;
-          i = j - 1; // Adjust index to skip processed characters
-        } else {
-          // Not a valid number, just add the current character
-          safeHTML += char;
-        }
-      }
-      // Regular character
-      else {
-        safeHTML += char;
-        if (inString && isKey) {
-          currentKeyContent += char;
-        }
+      } catch (e) {
+        // If parsing fails, continue with original object
       }
     }
 
-    return safeHTML;
+    // Recursively normalize each property
+    const result = {};
+    for (const key in obj) {
+      result[key] = normalizeJsonObject(obj[key]);
+    }
+    return result;
+  }
+
+  // Format and colorize JSON function
+  function formatJSON(obj) {
+    // Handle empty objects
+    if (!obj) {
+      return '<span class="null">Empty object</span>';
+    }
+
+    try {
+      // Create a pre-formatted version with proper indentation
+      const jsonString = JSON.stringify(obj, null, 2);
+
+      if (!jsonString) {
+        return '<span class="null">Invalid object</span>';
+      }
+
+      // Create a safe version with HTML entities
+      let safeHTML = "";
+
+      // Process each character
+      let inString = false;
+      let currentKeyContent = "";
+      let isKey = false;
+
+      for (let i = 0; i < jsonString.length; i++) {
+        const char = jsonString[i];
+        const nextChar = jsonString[i + 1] || "";
+
+        // Handle string quotes
+        if (char === '"') {
+          if (!inString) {
+            // Starting a string
+            inString = true;
+            // Check if this is likely a key (followed by a colon)
+            let j = i + 1;
+            while (
+              j < jsonString.length &&
+              jsonString[j] !== '"' &&
+              jsonString[j] !== "\n"
+            )
+              j++;
+
+            // If we find a quote and then a colon, it's a key
+            isKey =
+              j < jsonString.length - 1 &&
+              jsonString[j] === '"' &&
+              jsonString
+                .substring(j + 1)
+                .trim()
+                .startsWith(":");
+
+            if (isKey) {
+              safeHTML += '<span class="key">"';
+              currentKeyContent = "";
+            } else {
+              safeHTML += '<span class="string">"';
+            }
+          } else {
+            // Ending a string
+            inString = false;
+            if (isKey) {
+              safeHTML += '"</span>';
+              isKey = false;
+            } else {
+              safeHTML += '"</span>';
+            }
+          }
+        }
+        // Handle special HTML characters
+        else if (char === "<") {
+          safeHTML += "&lt;";
+        } else if (char === ">") {
+          safeHTML += "&gt;";
+        } else if (char === "&") {
+          safeHTML += "&amp;";
+        }
+        // Handle boolean values
+        else if (
+          !inString &&
+          ((char === "t" && jsonString.substr(i, 4) === "true") ||
+            (char === "f" && jsonString.substr(i, 5) === "false"))
+        ) {
+          const word = char === "t" ? "true" : "false";
+          safeHTML += `<span class="boolean">${word}</span>`;
+          i += word.length - 1; // Skip the rest of the word
+        }
+        // Handle null
+        else if (
+          !inString &&
+          char === "n" &&
+          jsonString.substr(i, 4) === "null"
+        ) {
+          safeHTML += '<span class="null">null</span>';
+          i += 3; // Skip the rest of the word
+        }
+        // Handle numbers
+        else if (!inString && ((char >= "0" && char <= "9") || char === "-")) {
+          let numStr = char;
+          let j = i + 1;
+          while (
+            j < jsonString.length &&
+            ((jsonString[j] >= "0" && jsonString[j] <= "9") ||
+              jsonString[j] === "." ||
+              jsonString[j] === "e" ||
+              jsonString[j] === "E" ||
+              jsonString[j] === "+" ||
+              jsonString[j] === "-")
+          ) {
+            numStr += jsonString[j];
+            j++;
+          }
+
+          // Only handle as number if it's valid
+          if (!isNaN(parseFloat(numStr))) {
+            safeHTML += `<span class="number">${numStr}</span>`;
+            i = j - 1; // Adjust index to skip processed characters
+          } else {
+            // Not a valid number, just add the current character
+            safeHTML += char;
+          }
+        }
+        // Regular character
+        else {
+          safeHTML += char;
+          if (inString && isKey) {
+            currentKeyContent += char;
+          }
+        }
+      }
+
+      return safeHTML;
+    } catch (error) {
+      console.error("Error formatting JSON:", error);
+      // Display error message
+      return `<span class="null">Error formatting: ${escapeHTML(
+        String(error)
+      )}</span>`;
+    }
+  }
+
+  // HTML escape function
+  function escapeHTML(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   // Format byte size to human-readable format
@@ -281,6 +333,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initial fetch
   fetchLogs();
+
+  // Handle clear requests button click
+  clearRequestsButton.addEventListener("click", () => {
+    clearAllLogs();
+  });
+
+  // Function to clear all logs
+  function clearAllLogs() {
+    fetch("/api/logs", {
+      method: "DELETE",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // Clear stored logs
+          storedLogs = [];
+          selectedLogId = null;
+
+          // Clear UI
+          logListElement.innerHTML = `
+            <div class="empty-state">
+              <p>No requests yet</p>
+              <p>Send any POST request to the server</p>
+            </div>
+          `;
+          jsonViewerElement.innerHTML = "";
+          headersViewerElement.innerHTML = "";
+        }
+      })
+      .catch((error) => {
+        console.error("Error clearing logs:", error);
+        alert("Failed to clear logs: " + error.message);
+      });
+  }
 
   // Auto-refresh every 5 seconds
   setInterval(fetchLogs, 5000);

@@ -1,5 +1,5 @@
 {
-  "name": "log-server",
+  "name": "pretty-payload",
   "version": "1.0.0",
   "description": "Request log server running on Glitch",
   "main": "server.js",
@@ -8,8 +8,8 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "body-parser": "^1.20.2"
+    "express": "^5.1.0",
+    "body-parser": "^2.2.0"
   },
   "engines": {
     "node": "16.x"
