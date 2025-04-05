@@ -28,10 +28,9 @@
   --glitch-light: #f5f5ff;
   --glitch-gray: #494b5c;
   --glitch-light-gray: #e0e0e8;
-  --glitch-font: "Inter", "Quicksand", "Poppins", -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-    "Open Sans", "Helvetica Neue", sans-serif;
-  --glitch-mono-font: "Monaco", "Consolas", "Liberation Mono", Menlo, monospace;
+  --glitch-font: 'Inter', 'Quicksand', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --glitch-mono-font: 'Monaco', 'Consolas', 'Liberation Mono', Menlo, monospace;
 }
 
 * {
@@ -60,11 +59,11 @@ h1 {
   position: relative;
   font-weight: 700;
   letter-spacing: 0.5px;
-  font-family: "Poppins", var(--glitch-font);
+  font-family: 'Poppins', var(--glitch-font);
 }
 
 h1::after {
-  content: "";
+  content: '';
   position: absolute;
   bottom: -5px;
   left: 0;
@@ -147,7 +146,7 @@ h1::after {
   font-size: 1.2rem;
   color: var(--glitch-dark);
   font-weight: 600;
-  font-family: "Quicksand", var(--glitch-font);
+  font-family: 'Quicksand', var(--glitch-font);
   letter-spacing: 0.5px;
 }
 
@@ -158,7 +157,7 @@ h1::after {
   padding: 0.5rem 1rem;
   border-radius: 4px;
   font-weight: 500;
-  font-family: "Quicksand", var(--glitch-font);
+  font-family: 'Quicksand', var(--glitch-font);
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -180,18 +179,13 @@ h1::after {
 
 /* Shimmer effect for the clear button */
 .clear-button::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: all 0.6s ease;
 }
 
@@ -226,7 +220,7 @@ h1::after {
 }
 
 .log-item.active::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   right: 0;
@@ -242,7 +236,7 @@ h1::after {
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
-  font-family: "Poppins", var(--glitch-font);
+  font-family: 'Poppins', var(--glitch-font);
   color: white;
   margin-right: 0.5rem;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
@@ -288,7 +282,6 @@ h1::after {
 }
 
 .size-badge,
-.status-badge,
 .time-badge {
   background-color: #f0f0fa;
   padding: 3px 8px;
@@ -307,10 +300,11 @@ h1::after {
   background-color: rgba(46, 174, 219, 0.1);
 }
 
-.status-badge {
+/* Remove status-badge styles */
+/* .status-badge {
   color: var(--glitch-green);
   background-color: rgba(12, 206, 107, 0.1);
-}
+} */
 
 .time-badge {
   color: var(--glitch-pink);
@@ -337,7 +331,7 @@ h1::after {
   background-color: transparent;
   cursor: pointer;
   font-weight: 600;
-  font-family: "Poppins", var(--glitch-font);
+  font-family: 'Poppins', var(--glitch-font);
   color: var(--glitch-gray);
   transition: all 0.2s;
   position: relative;
@@ -352,17 +346,13 @@ h1::after {
 
 /* Animated underline effect for tabs */
 .tab-button::after {
-  content: "";
+  content: '';
   position: absolute;
   bottom: 0;
   left: 10%;
   width: 80%;
   height: 3px;
-  background: linear-gradient(
-    to right,
-    var(--glitch-purple),
-    var(--glitch-pink)
-  );
+  background: linear-gradient(to right, var(--glitch-purple), var(--glitch-pink));
   border-radius: 3px 3px 0 0;
   transform: scaleX(0);
   transform-origin: bottom right;
@@ -450,25 +440,36 @@ h1::after {
 
 /* Headers styling */
 .header-line {
-  padding: 6px 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   font-family: var(--glitch-mono-font);
   font-size: 0.9rem;
   line-height: 1.5;
+  display: flex;
 }
 
 .header-line:nth-child(odd) {
-  background-color: #f8f8ff;
+  background-color: rgba(249, 250, 251, 0.5);
 }
 
 .header-key {
   color: var(--glitch-pink);
-  font-weight: bold;
+  font-weight: 600;
+  width: 200px;
+  min-width: 200px;
+  padding-right: 16px;
+  flex-shrink: 0;
 }
 
-.time-stamp {
-  color: var(--glitch-gray);
-  font-size: 0.8rem;
-  margin-top: 0.3rem;
+.header-value {
+  color: var(--glitch-dark);
+  word-break: break-all;
+  flex: 1;
+}
+
+/* Make headers tab scrollable */
+#headers-pane {
+  overflow-y: auto;
 }
 
 .empty-state {
@@ -485,6 +486,42 @@ h1::after {
 .empty-state p:first-child {
   font-size: 1.2rem;
   font-weight: 600;
-  font-family: "Quicksand", var(--glitch-font);
+  font-family: 'Quicksand', var(--glitch-font);
   margin-bottom: 1rem;
+}
+
+/* Raw request viewer styling */
+.raw-viewer {
+  font-family: var(--glitch-mono-font);
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #333;
+  margin: 0;
+  padding: 1.2rem;
+  background-color: #fafafa;
+  border-radius: 6px;
+  border: 1px solid var(--glitch-light-gray);
+  overflow-x: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* HTTP method highlighting in raw view */
+.http-method {
+  color: var(--glitch-purple);
+  font-weight: bold;
+}
+
+.http-path {
+  color: var(--glitch-blue);
+}
+
+.http-version {
+  color: var(--glitch-gray);
+}
+
+.header-name {
+  color: var(--glitch-pink);
+  font-weight: 600;
 }

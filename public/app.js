@@ -1,12 +1,13 @@
 // public/app.js - Frontend client for the dashboard
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
   // DOM elements
-  const logListElement = document.getElementById("log-list");
-  const jsonViewerElement = document.getElementById("json-viewer");
-  const headersViewerElement = document.getElementById("headers-viewer");
-  const tabButtons = document.querySelectorAll(".tab-button");
-  const tabPanes = document.querySelectorAll(".tab-pane");
-  const clearRequestsButton = document.getElementById("clear-requests");
+  const logListElement = document.getElementById('log-list');
+  const jsonViewerElement = document.getElementById('json-viewer');
+  const headersViewerElement = document.getElementById('headers-viewer');
+  const rawViewerElement = document.getElementById('raw-viewer');
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+  const clearRequestsButton = document.getElementById('clear-requests');
 
   // Currently selected log ID
   let selectedLogId = null;
@@ -15,22 +16,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Tab switching functionality
   tabButtons.forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener('click', () => {
       // Remove active class from all tab buttons
-      tabButtons.forEach((btn) => btn.classList.remove("active"));
+      tabButtons.forEach((btn) => btn.classList.remove('active'));
       // Remove active class from all tab panes
-      tabPanes.forEach((pane) => pane.classList.remove("active"));
+      tabPanes.forEach((pane) => pane.classList.remove('active'));
 
       // Add active class to clicked tab and its corresponding pane
-      button.classList.add("active");
-      const tabId = button.getAttribute("data-tab");
-      document.getElementById(`${tabId}-pane`).classList.add("active");
+      button.classList.add('active');
+      const tabId = button.getAttribute('data-tab');
+      document.getElementById(`${tabId}-pane`).classList.add('active');
     });
   });
 
   // Fetch and display log list
   function fetchLogs() {
-    fetch("/api/logs")
+    fetch('/api/logs')
       .then((response) => response.json())
       .then((logs) => {
         // Save logs to our stored array
@@ -49,40 +50,37 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Clear log list
-        logListElement.innerHTML = "";
+        logListElement.innerHTML = '';
 
         // Create list item for each log
         storedLogs.forEach((log) => {
-          const logItem = document.createElement("div");
-          logItem.className = "log-item";
-          logItem.setAttribute("data-id", log.id);
+          const logItem = document.createElement('div');
+          logItem.className = 'log-item';
+          logItem.setAttribute('data-id', log.id);
 
           const timestamp = new Date(log.timestamp);
           const formattedTime = timestamp.toLocaleTimeString();
 
           logItem.innerHTML = `
             <div>
-              <span class="log-method ${log.method.toLowerCase()}">${
-            log.method
-          }</span>
+              <span class="log-method ${log.method.toLowerCase()}">${log.method}</span>
               <span class="log-path">${log.path}</span>
             </div>
             <div class="log-details">
               <span class="size-badge">Size: ${formatBytes(log.bodySize)}</span>
-              <span class="status-badge">Status: ${log.status}</span>
               <span class="time-badge">ReceivedAt: ${formattedTime}</span>
             </div>
           `;
 
           // Add click event
-          logItem.addEventListener("click", () => {
+          logItem.addEventListener('click', () => {
             // Remove active class from all log items
-            document.querySelectorAll(".log-item").forEach((item) => {
-              item.classList.remove("active");
+            document.querySelectorAll('.log-item').forEach((item) => {
+              item.classList.remove('active');
             });
 
             // Add active class to clicked item
-            logItem.classList.add("active");
+            logItem.classList.add('active');
 
             // Fetch and display log details
             fetchLogDetails(log.id);
@@ -93,23 +91,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Select first log if it exists and none is selected
         if (storedLogs.length > 0 && !selectedLogId) {
-          const firstLogItem = logListElement.querySelector(".log-item");
+          const firstLogItem = logListElement.querySelector('.log-item');
           if (firstLogItem) {
-            firstLogItem.classList.add("active");
+            firstLogItem.classList.add('active');
             fetchLogDetails(storedLogs[0].id);
           }
         } else if (selectedLogId) {
           // Keep previously selected log highlighted if it still exists
-          const selectedItem = logListElement.querySelector(
-            `[data-id="${selectedLogId}"]`
-          );
+          const selectedItem = logListElement.querySelector(`[data-id="${selectedLogId}"]`);
           if (selectedItem) {
-            selectedItem.classList.add("active");
+            selectedItem.classList.add('active');
           }
         }
       })
       .catch((error) => {
-        console.error("Error fetching logs:", error);
+        console.error('Error fetching logs:', error);
         logListElement.innerHTML = `
           <div class="empty-state">
             <p>Error occurred while fetching logs</p>
@@ -129,20 +125,59 @@ document.addEventListener("DOMContentLoaded", () => {
         // Display body in JSON viewer
         jsonViewerElement.innerHTML = formatJSON(normalizeJsonObject(log.body));
 
-        // Display headers in headers viewer
-        headersViewerElement.innerHTML = formatJSON(log.headers);
+        // Display headers line by line
+        headersViewerElement.innerHTML = formatHeaders(log.headers);
+
+        // Display raw request
+        if (log.rawRequest) {
+          rawViewerElement.textContent = log.rawRequest;
+        } else {
+          // Fallback for logs that don't have rawRequest
+          const rawHeaders = Object.entries(log.headers)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('\n');
+
+          // Use raw body if available, otherwise use stringified body without pretty-printing
+          const bodyStr = log.rawBody || JSON.stringify(log.body);
+          const rawRequest = `${log.method} ${log.path} HTTP/1.1\n${rawHeaders}\n\n${bodyStr}`;
+          rawViewerElement.textContent = rawRequest;
+        }
       })
       .catch((error) => {
-        console.error("Error fetching log details:", error);
+        console.error('Error fetching log details:', error);
         jsonViewerElement.innerHTML = `Error: ${error.message}`;
         headersViewerElement.innerHTML = `Error: ${error.message}`;
+        rawViewerElement.textContent = `Error: ${error.message}`;
       });
+  }
+
+  // Format headers to display one per line
+  function formatHeaders(headers) {
+    if (!headers || Object.keys(headers).length === 0) {
+      return '<span class="null">No headers</span>';
+    }
+
+    let html = '';
+
+    // Sort header names alphabetically for consistency
+    const headerNames = Object.keys(headers).sort();
+
+    headerNames.forEach((name) => {
+      const value = headers[name];
+      // Create a line for each header
+      html += `<div class="header-line">
+        <span class="header-key">${escapeHTML(name)}</span>
+        <span class="header-value">${escapeHTML(String(value))}</span>
+      </div>`;
+    });
+
+    return html;
   }
 
   // Normalize objects that may have been double JSON-encoded
   function normalizeJsonObject(obj) {
     // Return non-objects as is
-    if (obj === null || typeof obj !== "object") {
+    if (obj === null || typeof obj !== 'object') {
       return obj;
     }
 
@@ -152,7 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         // Check if the key itself is a JSON string
         const parsedKey = JSON.parse(keys[0]);
-        if (typeof parsedKey === "object" && parsedKey !== null) {
+        if (typeof parsedKey === 'object' && parsedKey !== null) {
           // If the key is a JSON object, return it
           return parsedKey;
         }
@@ -176,6 +211,19 @@ document.addEventListener("DOMContentLoaded", () => {
       return '<span class="null">Empty object</span>';
     }
 
+    // Handle string objects (non-JSON payloads)
+    if (typeof obj === 'string') {
+      // Try to parse it as JSON first
+      try {
+        const parsedObj = JSON.parse(obj);
+        // If it parses successfully, format it as JSON
+        return formatJSON(parsedObj);
+      } catch (e) {
+        // If it's not JSON, display as plain text with HTML escaping
+        return `<span class="string">${escapeHTML(obj)}</span>`;
+      }
+    }
+
     try {
       // Create a pre-formatted version with proper indentation
       const jsonString = JSON.stringify(obj, null, 2);
@@ -185,16 +233,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // Create a safe version with HTML entities
-      let safeHTML = "";
+      let safeHTML = '';
 
       // Process each character
       let inString = false;
-      let currentKeyContent = "";
+      let currentKeyContent = '';
       let isKey = false;
 
       for (let i = 0; i < jsonString.length; i++) {
         const char = jsonString[i];
-        const nextChar = jsonString[i + 1] || "";
+        const nextChar = jsonString[i + 1] || '';
 
         // Handle string quotes
         if (char === '"') {
@@ -203,12 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
             inString = true;
             // Check if this is likely a key (followed by a colon)
             let j = i + 1;
-            while (
-              j < jsonString.length &&
-              jsonString[j] !== '"' &&
-              jsonString[j] !== "\n"
-            )
-              j++;
+            while (j < jsonString.length && jsonString[j] !== '"' && jsonString[j] !== '\n') j++;
 
             // If we find a quote and then a colon, it's a key
             isKey =
@@ -217,11 +260,11 @@ document.addEventListener("DOMContentLoaded", () => {
               jsonString
                 .substring(j + 1)
                 .trim()
-                .startsWith(":");
+                .startsWith(':');
 
             if (isKey) {
               safeHTML += '<span class="key">"';
-              currentKeyContent = "";
+              currentKeyContent = '';
             } else {
               safeHTML += '<span class="string">"';
             }
@@ -237,44 +280,40 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
         // Handle special HTML characters
-        else if (char === "<") {
-          safeHTML += "&lt;";
-        } else if (char === ">") {
-          safeHTML += "&gt;";
-        } else if (char === "&") {
-          safeHTML += "&amp;";
+        else if (char === '<') {
+          safeHTML += '&lt;';
+        } else if (char === '>') {
+          safeHTML += '&gt;';
+        } else if (char === '&') {
+          safeHTML += '&amp;';
         }
         // Handle boolean values
         else if (
           !inString &&
-          ((char === "t" && jsonString.substr(i, 4) === "true") ||
-            (char === "f" && jsonString.substr(i, 5) === "false"))
+          ((char === 't' && jsonString.substr(i, 4) === 'true') ||
+            (char === 'f' && jsonString.substr(i, 5) === 'false'))
         ) {
-          const word = char === "t" ? "true" : "false";
+          const word = char === 't' ? 'true' : 'false';
           safeHTML += `<span class="boolean">${word}</span>`;
           i += word.length - 1; // Skip the rest of the word
         }
         // Handle null
-        else if (
-          !inString &&
-          char === "n" &&
-          jsonString.substr(i, 4) === "null"
-        ) {
+        else if (!inString && char === 'n' && jsonString.substr(i, 4) === 'null') {
           safeHTML += '<span class="null">null</span>';
           i += 3; // Skip the rest of the word
         }
         // Handle numbers
-        else if (!inString && ((char >= "0" && char <= "9") || char === "-")) {
+        else if (!inString && ((char >= '0' && char <= '9') || char === '-')) {
           let numStr = char;
           let j = i + 1;
           while (
             j < jsonString.length &&
-            ((jsonString[j] >= "0" && jsonString[j] <= "9") ||
-              jsonString[j] === "." ||
-              jsonString[j] === "e" ||
-              jsonString[j] === "E" ||
-              jsonString[j] === "+" ||
-              jsonString[j] === "-")
+            ((jsonString[j] >= '0' && jsonString[j] <= '9') ||
+              jsonString[j] === '.' ||
+              jsonString[j] === 'e' ||
+              jsonString[j] === 'E' ||
+              jsonString[j] === '+' ||
+              jsonString[j] === '-')
           ) {
             numStr += jsonString[j];
             j++;
@@ -300,49 +339,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
       return safeHTML;
     } catch (error) {
-      console.error("Error formatting JSON:", error);
+      console.error('Error formatting JSON:', error);
       // Display error message
-      return `<span class="null">Error formatting: ${escapeHTML(
-        String(error)
-      )}</span>`;
+      return `<span class="null">Error formatting: ${escapeHTML(String(error))}</span>`;
     }
   }
 
   // HTML escape function
   function escapeHTML(str) {
     return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;') // Fix: removed the extra space between < and /
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   // Format byte size to human-readable format
   function formatBytes(bytes, decimals = 2) {
-    if (bytes === 0) return "0 Bytes";
+    if (bytes === 0) return '0 Bytes';
 
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
 
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
 
   // Initial fetch
   fetchLogs();
 
   // Handle clear requests button click
-  clearRequestsButton.addEventListener("click", () => {
+  clearRequestsButton.addEventListener('click', () => {
     clearAllLogs();
   });
 
   // Function to clear all logs
   function clearAllLogs() {
-    fetch("/api/logs", {
-      method: "DELETE",
+    fetch('/api/logs', {
+      method: 'DELETE',
     })
       .then((response) => response.json())
       .then((data) => {
@@ -358,13 +395,14 @@ document.addEventListener("DOMContentLoaded", () => {
               <p>Send any POST request to the server</p>
             </div>
           `;
-          jsonViewerElement.innerHTML = "";
-          headersViewerElement.innerHTML = "";
+          jsonViewerElement.innerHTML = '';
+          headersViewerElement.innerHTML = '';
+          rawViewerElement.textContent = '';
         }
       })
       .catch((error) => {
-        console.error("Error clearing logs:", error);
-        alert("Failed to clear logs: " + error.message);
+        console.error('Error clearing logs:', error);
+        alert('Failed to clear logs: ' + error.message);
       });
   }
 

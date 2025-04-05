@@ -26,9 +26,7 @@
       <div class="sidebar">
         <div class="sidebar-header">
           <h2>Request History</h2>
-          <button id="clear-requests" class="clear-button">
-            Clear Requests
-          </button>
+          <button id="clear-requests" class="clear-button">Clear Requests</button>
         </div>
         <div class="log-list" id="log-list">
           <!-- Log list is dynamically inserted by JavaScript -->
@@ -39,6 +37,7 @@
         <div class="tabs">
           <button class="tab-button active" data-tab="body">Body</button>
           <button class="tab-button" data-tab="headers">Headers</button>
+          <button class="tab-button" data-tab="raw">Raw</button>
         </div>
 
         <div class="tab-content">
@@ -47,6 +46,9 @@
           </div>
           <div class="tab-pane" id="headers-pane">
             <pre id="headers-viewer" class="json-viewer"></pre>
+          </div>
+          <div class="tab-pane" id="raw-pane">
+            <pre id="raw-viewer" class="raw-viewer"></pre>
           </div>
         </div>
       </div>
