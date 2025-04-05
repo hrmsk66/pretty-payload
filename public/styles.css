@@ -44,6 +44,12 @@ body {
   line-height: 1.6;
   color: var(--glitch-dark);
   background-color: var(--glitch-light);
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent body scrolling */
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 header {
@@ -52,6 +58,8 @@ header {
   padding: 1.2rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   position: relative;
+  z-index: 10; /* Ensure header stays above other content */
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 h1 {
@@ -118,7 +126,8 @@ h1::after {
 
 .dashboard {
   display: flex;
-  height: calc(100vh - 3.6rem);
+  flex: 1; /* Fill remaining space */
+  overflow: hidden; /* Hide overflow to prevent scrollbars at this level */
 }
 
 .sidebar {
@@ -131,6 +140,7 @@ h1::after {
   flex-direction: column;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
+  overflow: hidden; /* Contains the overflow */
 }
 
 .sidebar-header {
@@ -194,7 +204,7 @@ h1::after {
 }
 
 .log-list {
-  overflow-y: auto;
+  overflow-y: auto; /* Allow vertical scrolling */
   flex-grow: 1;
 }
 
@@ -317,6 +327,7 @@ h1::after {
   flex-direction: column;
   background-color: white;
   min-width: 0; /* Important: prevents flex items from expanding beyond their container */
+  overflow: hidden; /* Contains the overflow */
 }
 
 .tabs {
@@ -383,7 +394,7 @@ h1::after {
 .tab-pane {
   display: none;
   height: 100%;
-  overflow: auto;
+  overflow: auto; /* Allow content to scroll */
   padding: 1.2rem;
 }
 

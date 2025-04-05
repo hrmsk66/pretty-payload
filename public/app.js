@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
       logListElement.innerHTML = `
         <div class="empty-state">
           <p>No requests yet</p>
-          <p>Send any POST request to the server</p>
+          <p>Send any POST request to me</p>
         </div>
       `;
       return;
@@ -448,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
           logListElement.innerHTML = `
             <div class="empty-state">
               <p>No requests yet</p>
-              <p>Send any POST request to the server</p>
+              <p>Send any POST request to me</p>
             </div>
           `;
           jsonViewerElement.innerHTML = '';
