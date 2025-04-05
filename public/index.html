@@ -28,6 +28,16 @@
           <h2>Request History</h2>
           <button id="clear-requests" class="clear-button">Clear Requests</button>
         </div>
+        <div class="filter-container">
+          <input
+            type="text"
+            id="path-filter"
+            class="path-filter"
+            placeholder="Filter by path or headers..."
+            autocomplete="off"
+          />
+          <button id="clear-filter" class="clear-filter-button" title="Clear filter">×</button>
+        </div>
         <div class="log-list" id="log-list">
           <!-- Log list is dynamically inserted by JavaScript -->
         </div>

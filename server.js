@@ -106,7 +106,9 @@ app.get('/api/logs', (req, res) => {
     method: log.method,
     path: log.path,
     bodySize: log.bodySize,
-    // Removed status field from API response
+    // ヘッダーは残し、ボディは除外
+    headers: log.headers,
+    // body: log.body は削除
   }));
 
   res.json(sortedLogs);

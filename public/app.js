@@ -8,11 +8,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabPanes = document.querySelectorAll('.tab-pane');
   const clearRequestsButton = document.getElementById('clear-requests');
+  const pathFilterInput = document.getElementById('path-filter');
+  const clearFilterButton = document.getElementById('clear-filter');
 
   // Currently selected log ID
   let selectedLogId = null;
   // Store logs to prevent clearing
   let storedLogs = [];
+  // Current filter value
+  let currentFilter = '';
 
   // Tab switching functionality
   tabButtons.forEach((button) => {
@@ -29,7 +33,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Fetch and display log list
+  // Add filter functionality
+  pathFilterInput.addEventListener('input', (e) => {
+    currentFilter = e.target.value.toLowerCase();
+    renderLogList();
+  });
+
+  // Clear filter button
+  clearFilterButton.addEventListener('click', () => {
+    pathFilterInput.value = '';
+    currentFilter = '';
+    renderLogList();
+  });
+
+  // Fetch and display log list - split into fetching and rendering
   function fetchLogs() {
     fetch('/api/logs')
       .then((response) => response.json())
@@ -39,70 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
           storedLogs = logs;
         }
 
-        if (storedLogs.length === 0) {
-          logListElement.innerHTML = `
-            <div class="empty-state">
-              <p>No requests yet</p>
-              <p>Send any POST request to the server</p>
-            </div>
-          `;
-          return;
-        }
-
-        // Clear log list
-        logListElement.innerHTML = '';
-
-        // Create list item for each log
-        storedLogs.forEach((log) => {
-          const logItem = document.createElement('div');
-          logItem.className = 'log-item';
-          logItem.setAttribute('data-id', log.id);
-
-          const timestamp = new Date(log.timestamp);
-          const formattedTime = timestamp.toLocaleTimeString();
-
-          logItem.innerHTML = `
-            <div>
-              <span class="log-method ${log.method.toLowerCase()}">${log.method}</span>
-              <span class="log-path">${log.path}</span>
-            </div>
-            <div class="log-details">
-              <span class="size-badge">Size: ${formatBytes(log.bodySize)}</span>
-              <span class="time-badge">ReceivedAt: ${formattedTime}</span>
-            </div>
-          `;
-
-          // Add click event
-          logItem.addEventListener('click', () => {
-            // Remove active class from all log items
-            document.querySelectorAll('.log-item').forEach((item) => {
-              item.classList.remove('active');
-            });
-
-            // Add active class to clicked item
-            logItem.classList.add('active');
-
-            // Fetch and display log details
-            fetchLogDetails(log.id);
-          });
-
-          logListElement.appendChild(logItem);
-        });
-
-        // Select first log if it exists and none is selected
-        if (storedLogs.length > 0 && !selectedLogId) {
-          const firstLogItem = logListElement.querySelector('.log-item');
-          if (firstLogItem) {
-            firstLogItem.classList.add('active');
-            fetchLogDetails(storedLogs[0].id);
-          }
-        } else if (selectedLogId) {
-          // Keep previously selected log highlighted if it still exists
-          const selectedItem = logListElement.querySelector(`[data-id="${selectedLogId}"]`);
-          if (selectedItem) {
-            selectedItem.classList.add('active');
-          }
-        }
+        renderLogList();
       })
       .catch((error) => {
         console.error('Error fetching logs:', error);
@@ -113,6 +67,105 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
       });
+  }
+
+  // Render log list with current filter applied
+  function renderLogList() {
+    if (storedLogs.length === 0) {
+      logListElement.innerHTML = `
+        <div class="empty-state">
+          <p>No requests yet</p>
+          <p>Send any POST request to the server</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Clear log list
+    logListElement.innerHTML = '';
+
+    // Filter logs based on current filter
+    const filteredLogs = currentFilter
+      ? storedLogs.filter((log) => {
+          // Search in path
+          if (log.path.toLowerCase().includes(currentFilter)) {
+            return true;
+          }
+
+          // Search in headers
+          const headersStr = JSON.stringify(log.headers || {}).toLowerCase();
+          if (headersStr.includes(currentFilter)) {
+            return true;
+          }
+
+          // Remove body search to improve performance
+          // Body content is no longer searched
+
+          return false;
+        })
+      : storedLogs;
+
+    if (filteredLogs.length === 0) {
+      logListElement.innerHTML = `
+        <div class="empty-state">
+          <p>No matching requests</p>
+          <p>Try a different filter</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Create list item for each log
+    filteredLogs.forEach((log) => {
+      const logItem = document.createElement('div');
+      logItem.className = 'log-item';
+      logItem.setAttribute('data-id', log.id);
+
+      const timestamp = new Date(log.timestamp);
+      const formattedTime = timestamp.toLocaleTimeString();
+
+      logItem.innerHTML = `
+        <div>
+          <span class="log-method ${log.method.toLowerCase()}">${log.method}</span>
+          <span class="log-path">${log.path}</span>
+        </div>
+        <div class="log-details">
+          <span class="size-badge">Size: ${formatBytes(log.bodySize)}</span>
+          <span class="time-badge">ReceivedAt: ${formattedTime}</span>
+        </div>
+      `;
+
+      // Add click event
+      logItem.addEventListener('click', () => {
+        // Remove active class from all log items
+        document.querySelectorAll('.log-item').forEach((item) => {
+          item.classList.remove('active');
+        });
+
+        // Add active class to clicked item
+        logItem.classList.add('active');
+
+        // Fetch and display log details
+        fetchLogDetails(log.id);
+      });
+
+      logListElement.appendChild(logItem);
+    });
+
+    // Select first log if it exists and none is selected
+    if (filteredLogs.length > 0 && !selectedLogId) {
+      const firstLogItem = logListElement.querySelector('.log-item');
+      if (firstLogItem) {
+        firstLogItem.classList.add('active');
+        fetchLogDetails(filteredLogs[0].id);
+      }
+    } else if (selectedLogId) {
+      // Keep previously selected log highlighted if it still exists
+      const selectedItem = logListElement.querySelector(`[data-id="${selectedLogId}"]`);
+      if (selectedItem) {
+        selectedItem.classList.add('active');
+      }
+    }
   }
 
   // Fetch and display details for a specific log
@@ -387,6 +440,9 @@ document.addEventListener('DOMContentLoaded', () => {
           // Clear stored logs
           storedLogs = [];
           selectedLogId = null;
+          // Clear filter
+          pathFilterInput.value = '';
+          currentFilter = '';
 
           // Clear UI
           logListElement.innerHTML = `

@@ -525,3 +525,50 @@ h1::after {
   color: var(--glitch-pink);
   font-weight: 600;
 }
+
+/* Filter input styling */
+.filter-container {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--glitch-light-gray);
+  display: flex;
+  align-items: center;
+  background-color: rgba(249, 250, 251, 0.5);
+}
+
+.path-filter {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--glitch-light-gray);
+  border-radius: 4px;
+  font-family: var(--glitch-font);
+  font-size: 0.9rem;
+  background-color: white;
+  transition: all 0.2s ease;
+}
+
+.path-filter:focus {
+  outline: none;
+  border-color: var(--glitch-purple);
+  box-shadow: 0 0 0 2px rgba(153, 51, 255, 0.2);
+}
+
+.clear-filter-button {
+  background: none;
+  border: none;
+  color: var(--glitch-gray);
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.clear-filter-button:hover {
+  background-color: rgba(153, 51, 255, 0.1);
+  color: var(--glitch-purple);
+}
