@@ -442,7 +442,7 @@ h1::after {
 }
 
 .boolean {
-  color: var(--glitch-purple);
+  color: var (--glitch-purple);
 }
 
 .null {
@@ -555,6 +555,21 @@ h1::after {
   font-size: 0.9rem;
   background-color: white;
   transition: all 0.2s ease;
+}
+
+/* Add stylish placeholder styling */
+.path-filter::placeholder {
+  color: #b0b0c5;
+  font-style: italic;
+  font-family: 'Quicksand', var(--glitch-font);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.path-filter:focus::placeholder {
+  opacity: 0.5;
 }
 
 .path-filter:focus {
