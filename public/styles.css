@@ -320,7 +320,7 @@ h1::after {
 }
 
 .compressed-badge::before {
-  content: '✨️ ';
+  content: '⚡️️ ';
   margin-right: 3px;
   font-size: 0.8rem;
 }
