@@ -14,11 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyJsonButton = document.getElementById('copy-json');
   const copyCurlButton = document.getElementById('copy-curl');
 
-  // Extract tenant ID from the URL
-  const tenantId = window.location.pathname.substring(1);
+  // Extract workspace ID from the URL
+  const workspaceId = window.location.pathname.substring(1);
 
-  // API base path for the current tenant
-  const apiBasePath = `/api/${tenantId}`;
+  // API base path for the current workspace
+  const apiBasePath = `/api/${workspaceId}`;
 
   // Currently selected log ID
   let selectedLogId = null;
@@ -193,11 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Compression badge
       const compressionBadge = log.isCompressed
-        ? `<span class="compressed-badge"><strong>Compressed</strong></span>`
+        ? `<span class="compressed-badge">Compressed</span>`
         : '';
 
       // IP address badge
-      const ipBadge = log.ip ? `<span class="ip-badge"><strong>IP:</strong> ${log.ip}</span>` : '';
+      const ipBadge = log.ip ? `<span class="ip-badge">IP: ${log.ip}</span>` : '';
 
       logItem.innerHTML = `
         <div>
@@ -205,10 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="log-path">${log.path}</span>
         </div>
         <div class="log-details">
-          <span class="size-badge"><strong>Size:</strong> ${formatBytes(log.bodySize)}</span>
+          <span class="size-badge">Size: ${formatBytes(log.bodySize)}</span>
           ${compressionBadge}
           ${ipBadge}
-          <span class="time-badge"><strong>ReceivedAt:</strong> ${formattedTime}</span>
+          <span class="time-badge">ReceivedAt: ${formattedTime}</span>
         </div>
       `;
 
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Base of the curl command
     let command = `curl -X ${requestData.method}`;
 
-    // Use the current tenant URL for the cURL command
+    // Use the current workspace URL for the cURL command
     let url = `${window.location.origin}${window.location.pathname}`;
 
     // Add the headers

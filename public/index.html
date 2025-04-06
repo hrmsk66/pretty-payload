@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pretty Payload</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="icon"
+      href="https://cdn.glitch.global/1a8466ea-9b94-4ea4-87d1-d3bf275de595/public%2Ffavicon.ico?v=1743823451421"
+      type="image/x-icon"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Landing page specific styles */
+      .landing-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: calc(100vh - 80px); /* Adjust for header */
+        text-align: center;
+        padding: 2rem;
+      }
+
+      .landing-title {
+        font-size: 2.5rem;
+        font-family: 'Poppins', var(--glitch-font);
+        font-weight: 700;
+        color: var(--glitch-dark);
+        margin-bottom: 1rem;
+        letter-spacing: 0.5px;
+      }
+
+      .landing-subtitle {
+        font-size: 1.2rem;
+        font-family: 'Quicksand', var(--glitch-font);
+        color: var(--glitch-gray);
+        margin-bottom: 3rem;
+        max-width: 600px;
+        line-height: 1.6;
+      }
+
+      .create-workspace-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--glitch-purple);
+        color: white;
+        font-family: 'Quicksand', var(--glitch-font);
+        font-weight: 600;
+        font-size: 1.1rem;
+        padding: 0.85rem 2rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(153, 51, 255, 0.3);
+        letter-spacing: 0.5px;
+      }
+
+      .create-workspace-button:hover {
+        background-color: #8729e0;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(153, 51, 255, 0.4);
+      }
+
+      .create-workspace-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 5px rgba(153, 51, 255, 0.3);
+      }
+
+      .create-workspace-button svg {
+        margin-right: 10px;
+      }
+
+      .workspace-links {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .workspace-link {
+        display: inline-block;
+        padding: 0.5rem 1.2rem;
+        background-color: white;
+        border: 2px solid var(--glitch-light-gray);
+        border-radius: 20px;
+        color: var(--glitch-dark);
+        font-family: 'Quicksand', var(--glitch-font);
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+      }
+
+      .workspace-link:hover {
+        background-color: var(--glitch-light);
+        border-color: var(--glitch-purple);
+        color: var(--glitch-purple);
+        transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Pretty Payload</h1>
+    </header>
+
+    <main class="landing-container">
+      <h2 class="landing-title">API Request Visualizer</h2>
+      <p class="landing-subtitle">Create your own workspace to visualize and debug API requests.</p>
+
+      <button id="create-workspace-btn" class="create-workspace-button">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        Create New Workspace
+      </button>
+    </main>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // Handle create new workspace button click
+        document.getElementById('create-workspace-btn').addEventListener('click', () => {
+          fetch('/api/workspaces', {
+            method: 'POST',
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.workspaceId) {
+                window.location.href = `/${data.workspaceId}`;
+              } else {
+                alert('Failed to create workspace');
+              }
+            })
+            .catch((error) => {
+              console.error('Error creating workspace:', error);
+              alert('Error creating workspace');
+            });
+        });
+      });
+    </script>
+  </body>
+</html>

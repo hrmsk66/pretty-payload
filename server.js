@@ -6,13 +6,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 const zlib = require('zlib');
 const util = require('util');
-const { TenantManager } = require('./lib/tenantManager');
+const WorkspaceManager = require('./lib/workspaceManager');
 
 // Promisify zlib functions
 const gunzip = util.promisify(zlib.gunzip);
 
-// Initialize the tenant manager
-const tenantManager = new TenantManager();
+// Initialize the workspace manager
+const workspaceManager = new WorkspaceManager();
 
 // Make sure we get the raw body for all requests
 app.use((req, res, next) => {
@@ -69,16 +69,21 @@ app.use((req, res, next) => {
   });
 });
 
-// Create new tenant and redirect
-app.get('/new', (req, res) => {
-  const tenantId = tenantManager.createTenant();
-  res.redirect(`/${tenantId}`);
+// API to create a new workspace and return its ID
+app.post('/api/workspaces', (req, res) => {
+  const workspaceId = workspaceManager.createWorkspace();
+  res.json({ success: true, workspaceId });
 });
 
-// For tenant health check and status
+// API to get all predefined workspaces
+app.get('/api/workspaces/predefined', (req, res) => {
+  res.json({ workspaces: workspaceManager.predefinedWorkspaces });
+});
+
+// For workspace health check and status
 app.get('/api/status', (req, res) => {
   const stats = {
-    activeTenantsCount: tenantManager.getTenantsCount(),
+    activeWorkspacesCount: workspaceManager.getWorkspacesCount(),
     uptime: process.uptime(),
   };
   res.json(stats);
@@ -87,23 +92,20 @@ app.get('/api/status', (req, res) => {
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API endpoints for tenants
-// Important: Fixed route order to prevent route conflicts
+// API to get all request logs for a workspace
+app.get('/api/:workspaceId/logs', (req, res) => {
+  const { workspaceId } = req.params;
+  const workspace = workspaceManager.getWorkspace(workspaceId);
 
-// API to get all request logs for a tenant
-app.get('/api/:tenantId/logs', (req, res) => {
-  const { tenantId } = req.params;
-  const tenant = tenantManager.getTenant(tenantId);
-
-  if (!tenant) {
-    return res.status(404).json({ error: 'Tenant not found' });
+  if (!workspace) {
+    return res.status(404).json({ error: 'Workspace not found' });
   }
 
-  // Mark tenant as active
-  tenantManager.touchTenant(tenantId);
+  // Mark workspace as active
+  workspaceManager.touchWorkspace(workspaceId);
 
   // Sort logs with newest requests first
-  const sortedLogs = [...tenant.logs].reverse().map((log) => ({
+  const sortedLogs = [...workspace.logs].reverse().map((log) => ({
     id: log.id,
     timestamp: log.timestamp,
     method: log.method,
@@ -118,31 +120,31 @@ app.get('/api/:tenantId/logs', (req, res) => {
   res.json(sortedLogs);
 });
 
-// API to clear all logs for a tenant
-app.delete('/api/:tenantId/logs', (req, res) => {
-  const { tenantId } = req.params;
-  const success = tenantManager.clearTenantLogs(tenantId);
+// API to clear all logs for a workspace
+app.delete('/api/:workspaceId/logs', (req, res) => {
+  const { workspaceId } = req.params;
+  const success = workspaceManager.clearWorkspaceLogs(workspaceId);
 
   if (!success) {
-    return res.status(404).json({ error: 'Tenant not found' });
+    return res.status(404).json({ error: 'Workspace not found' });
   }
 
   res.status(200).json({ success: true, message: 'All logs cleared' });
 });
 
-// API to get a specific log by ID for a tenant
-app.get('/api/:tenantId/logs/:logId', (req, res) => {
-  const { tenantId, logId } = req.params;
-  const tenant = tenantManager.getTenant(tenantId);
+// API to get a specific log by ID for a workspace
+app.get('/api/:workspaceId/logs/:logId', (req, res) => {
+  const { workspaceId, logId } = req.params;
+  const workspace = workspaceManager.getWorkspace(workspaceId);
 
-  if (!tenant) {
-    return res.status(404).json({ error: 'Tenant not found' });
+  if (!workspace) {
+    return res.status(404).json({ error: 'Workspace not found' });
   }
 
-  // Mark tenant as active
-  tenantManager.touchTenant(tenantId);
+  // Mark workspace as active
+  workspaceManager.touchWorkspace(workspaceId);
 
-  const log = tenant.logs.find((log) => log.id === logId);
+  const log = workspace.logs.find((log) => log.id === logId);
   if (!log) {
     return res.status(404).json({ error: 'Log not found' });
   }
@@ -150,34 +152,34 @@ app.get('/api/:tenantId/logs/:logId', (req, res) => {
   res.json(log);
 });
 
-// Serve the dashboard for a specific tenant
-app.get('/:tenantId', (req, res) => {
-  const { tenantId } = req.params;
+// Serve the dashboard for a specific workspace
+app.get('/:workspaceId', (req, res) => {
+  const { workspaceId } = req.params;
 
-  // Check if tenant exists
-  if (!tenantManager.getTenant(tenantId)) {
-    return res.status(404).send('Tenant not found');
+  // Check if workspace exists
+  if (!workspaceManager.getWorkspace(workspaceId)) {
+    return res.status(404).send('Workspace not found');
   }
 
-  // Mark tenant as active
-  tenantManager.touchTenant(tenantId);
+  // Mark workspace as active
+  workspaceManager.touchWorkspace(workspaceId);
 
   // Serve the dashboard HTML - now using dashboard.html instead of index.html
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
-// Logging middleware to capture tenant POST requests
-app.post(['/:tenantId', '/:tenantId/*'], (req, res) => {
-  const { tenantId } = req.params;
-  const tenant = tenantManager.getTenant(tenantId);
+// Logging middleware to capture workspace POST requests
+app.post(['/:workspaceId', '/:workspaceId/*'], (req, res) => {
+  const { workspaceId } = req.params;
+  const workspace = workspaceManager.getWorkspace(workspaceId);
 
-  // Check if tenant exists
-  if (!tenant) {
-    return res.status(404).send('Tenant not found');
+  // Check if workspace exists
+  if (!workspace) {
+    return res.status(404).send('Workspace not found');
   }
 
-  // Mark tenant as active
-  tenantManager.touchTenant(tenantId);
+  // Mark workspace as active
+  workspaceManager.touchWorkspace(workspaceId);
 
   // Format headers into raw HTTP-like format
   const rawHeaders = Object.entries(req.headers)
@@ -214,15 +216,15 @@ app.post(['/:tenantId', '/:tenantId/*'], (req, res) => {
     ip: ip,
   };
 
-  // Store logs with the tenant manager
-  tenantManager.addRequestLog(tenantId, requestData);
+  // Store logs with the workspace manager
+  workspaceManager.addRequestLog(workspaceId, requestData);
 
   // Respond with confirmation
   res.status(200).send(`Request to ${req.path} received (${bodySize} bytes)`);
 });
 
-// Start housekeeping task for tenant cleanup
-tenantManager.startHousekeeping();
+// Start housekeeping task for workspace cleanup
+workspaceManager.startHousekeeping();
 
 // Start the server
 app.listen(port, () => {
