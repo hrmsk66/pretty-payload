@@ -102,6 +102,9 @@ app.use((req, res, next) => {
   // For raw request display, use the raw (compressed) content
   const rawRequest = `${req.method} ${req.path} HTTP/1.1\n${rawHeaders}\n\n${bodyStr}`;
 
+  // Get client IP address
+  const ip = req.headers['fastly-client-ip'] || req.connection.remoteAddress || req.ip || '';
+
   // Capture request data
   const requestData = {
     id: Date.now().toString(),
@@ -119,6 +122,7 @@ app.use((req, res, next) => {
       req.isCompressed && req.decompressedBody
         ? Buffer.byteLength(req.decompressedBody, 'utf8')
         : bodySize,
+    ip: ip,
   };
 
   // Store logs
@@ -145,6 +149,7 @@ app.get('/pp-api/logs', (req, res) => {
     isCompressed: log.isCompressed,
     originalSize: log.originalSize,
     headers: log.headers,
+    ip: log.ip,
   }));
 
   res.json(sortedLogs);

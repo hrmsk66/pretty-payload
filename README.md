@@ -51,6 +51,13 @@ curl -X POST http://localhost:3000/any/test/path \
   --data-binary @tests/test.json.gz
 ```
 
+## Dashboard Features
+
+- **Body tab**: Displays JSON content with syntax highlighting
+- **Headers tab**: Shows all HTTP headers in a readable format
+- **Raw tab**: Shows the raw HTTP request as received by the server
+- **Binary tab**: Displays the hexadecimal and ASCII representation of the request data
+
 ## API Endpoints
 
 The tool uses the following API endpoints:

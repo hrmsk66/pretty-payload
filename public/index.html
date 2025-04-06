@@ -33,7 +33,7 @@
             type="text"
             id="path-filter"
             class="path-filter"
-            placeholder="Filter by path or headers..."
+            placeholder="Filter by path, headers or IP..."
             autocomplete="off"
           />
           <button id="clear-filter" class="clear-filter-button" title="Clear filter">×</button>
@@ -48,6 +48,7 @@
           <button class="tab-button active" data-tab="body">Body</button>
           <button class="tab-button" data-tab="headers">Headers</button>
           <button class="tab-button" data-tab="raw">Raw</button>
+          <button class="tab-button" data-tab="binary">Binary</button>
         </div>
 
         <div class="tab-content">
@@ -77,6 +78,9 @@
           </div>
           <div class="tab-pane" id="raw-pane">
             <pre id="raw-viewer" class="raw-viewer"></pre>
+          </div>
+          <div class="tab-pane" id="binary-pane">
+            <pre id="binary-viewer" class="binary-viewer"></pre>
           </div>
         </div>
       </div>

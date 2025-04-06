@@ -293,7 +293,8 @@ h1::after {
 
 .compressed-badge,
 .size-badge,
-.time-badge {
+.time-badge,
+.ip-badge {
   background-color: #f0f0fa;
   padding: 3px 8px;
   border-radius: 12px;
@@ -320,6 +321,12 @@ h1::after {
 .compressed-badge {
   color: var(--glitch-purple);
   background-color: rgba(153, 51, 255, 0.1);
+}
+
+/* IP badge styling */
+.ip-badge {
+  color: var(--glitch-green);
+  background-color: rgba(12, 206, 107, 0.1);
 }
 
 /* Decompression notice styling */
@@ -666,4 +673,64 @@ h1::after {
 /* Remove copy success message */
 .copy-success {
   display: none;
+}
+
+/* Binary viewer styling */
+.binary-viewer {
+  font-family: var(--glitch-mono-font);
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #333;
+  margin: 0;
+  padding: 1.2rem;
+  background-color: #fafafa;
+  border-radius: 6px;
+  border: 1px solid var(--glitch-light-gray);
+  overflow-x: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.binary-row {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.binary-offset {
+  color: var(--glitch-pink);
+  font-weight: bold;
+  width: 80px;
+  margin-right: 16px;
+}
+
+.binary-hex {
+  font-family: var(--glitch-mono-font);
+  color: var(--glitch-blue);
+  margin-right: 16px;
+}
+
+.binary-hex span {
+  display: inline-block;
+  width: 24px;
+  text-align: center;
+}
+
+.binary-hex span:nth-child(8n) {
+  margin-right: 8px;
+}
+
+.binary-ascii {
+  font-family: var(--glitch-mono-font);
+  color: var(--glitch-green);
+}
+
+.binary-ascii span {
+  display: inline-block;
+  width: 12px;
+  text-align: center;
+}
+
+.binary-ascii span:nth-child(8n) {
+  margin-right: 8px;
 }

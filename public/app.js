@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const jsonViewerElement = document.getElementById('json-viewer');
   const headersViewerElement = document.getElementById('headers-viewer');
   const rawViewerElement = document.getElementById('raw-viewer');
+  const binaryViewerElement = document.getElementById('binary-viewer');
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabPanes = document.querySelectorAll('.tab-pane');
   const clearRequestsButton = document.getElementById('clear-requests');
@@ -88,25 +89,32 @@ document.addEventListener('DOMContentLoaded', () => {
     logListElement.innerHTML = '';
 
     // Filter logs based on current filter
-    const filteredLogs = currentFilter
-      ? storedLogs.filter((log) => {
-          // Search in path
-          if (log.path.toLowerCase().includes(currentFilter)) {
-            return true;
-          }
+    const filteredLogs = storedLogs.filter((log) => {
+      if (!currentFilter) {
+        return true;
+      }
 
-          // Search in headers
-          const headersStr = JSON.stringify(log.headers || {}).toLowerCase();
-          if (headersStr.includes(currentFilter)) {
-            return true;
-          }
+      // Search in path
+      if (log.path.toLowerCase().includes(currentFilter)) {
+        return true;
+      }
 
-          // Remove body search to improve performance
-          // Body content is no longer searched
+      // Search in headers
+      if (
+        JSON.stringify(log.headers || {})
+          .toLowerCase()
+          .includes(currentFilter)
+      ) {
+        return true;
+      }
 
-          return false;
-        })
-      : storedLogs;
+      // Search in IP address
+      if (log.ip && log.ip.toLowerCase().includes(currentFilter)) {
+        return true;
+      }
+
+      return false;
+    });
 
     if (filteredLogs.length === 0) {
       logListElement.innerHTML = `
@@ -127,10 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const timestamp = new Date(log.timestamp);
       const formattedTime = timestamp.toLocaleTimeString();
 
-      // Simplified compression badge
+      // Compression badge
       const compressionBadge = log.isCompressed
         ? `<span class="compressed-badge">Compressed</span>`
         : '';
+
+      // IP address badge
+      const ipBadge = log.ip ? `<span class="ip-badge">IP: ${log.ip}</span>` : '';
 
       logItem.innerHTML = `
         <div>
@@ -140,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="log-details">
           <span class="size-badge">Size: ${formatBytes(log.bodySize)}</span>
           ${compressionBadge}
+          ${ipBadge}
           <span class="time-badge">ReceivedAt: ${formattedTime}</span>
         </div>
       `;
@@ -213,6 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Display raw request
         if (log.rawRequest) {
           rawViewerElement.textContent = log.rawRequest;
+
+          // Display binary representation
+          binaryViewerElement.innerHTML = formatBinary(log.rawRequest);
         } else {
           // Fallback for logs that don't have rawRequest
           const rawHeaders = Object.entries(log.headers)
@@ -223,6 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const bodyStr = log.rawBody || JSON.stringify(log.body);
           const rawRequest = `${log.method} ${log.path} HTTP/1.1\n${rawHeaders}\n\n${bodyStr}`;
           rawViewerElement.textContent = rawRequest;
+
+          // Display binary representation
+          binaryViewerElement.innerHTML = formatBinary(rawRequest);
         }
       })
       .catch((error) => {
@@ -230,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         jsonViewerElement.innerHTML = `Error: ${error.message}`;
         headersViewerElement.innerHTML = `Error: ${error.message}`;
         rawViewerElement.textContent = `Error: ${error.message}`;
+        binaryViewerElement.innerHTML = `Error: ${error.message}`;
         currentRequestData = null;
 
         // Hide copy button on error
@@ -439,6 +458,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+
+  // Format binary representation of data
+  function formatBinary(data) {
+    if (!data || data.length === 0) {
+      return '<span class="null">No data</span>';
+    }
+
+    let html = '';
+    const bytes = new TextEncoder().encode(data);
+    const BYTES_PER_ROW = 16;
+
+    // Process each row of bytes
+    for (let offset = 0; offset < bytes.length; offset += BYTES_PER_ROW) {
+      const rowBytes = bytes.slice(offset, offset + BYTES_PER_ROW);
+
+      // Create row container
+      html += '<div class="binary-row">';
+
+      // Add offset
+      html += `<div class="binary-offset">${offset.toString(16).padStart(8, '0')}</div>`;
+
+      // Add hex representation
+      html += '<div class="binary-hex">';
+      for (let i = 0; i < BYTES_PER_ROW; i++) {
+        if (i < rowBytes.length) {
+          html += `<span>${rowBytes[i].toString(16).padStart(2, '0')}</span>`;
+        } else {
+          html += '<span>  </span>';
+        }
+      }
+      html += '</div>';
+
+      // Add ASCII representation
+      html += '<div class="binary-ascii">';
+      for (let i = 0; i < BYTES_PER_ROW; i++) {
+        if (i < rowBytes.length) {
+          const byte = rowBytes[i];
+          // Display printable ASCII characters (32-126), replace others with a dot
+          const char = byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '.';
+          html += `<span>${escapeHTML(char)}</span>`;
+        } else {
+          html += '<span> </span>';
+        }
+      }
+      html += '</div>';
+
+      // Close row
+      html += '</div>';
+    }
+
+    return html;
   }
 
   // Initial fetch
