@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const pathFilterInput = document.getElementById('path-filter');
   const clearFilterButton = document.getElementById('clear-filter');
   const copyJsonButton = document.getElementById('copy-json');
+  const copyCurlButton = document.getElementById('copy-curl');
 
   // Currently selected log ID
   let selectedLogId = null;
@@ -199,8 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Store current request data for copy functionality
         currentRequestData = log;
 
-        // Show the copy button when a log is selected
+        // Show the copy buttons when a log is selected
         copyJsonButton.classList.add('visible');
+        copyCurlButton.classList.add('visible');
 
         // Add decompression notice if applicable
         let decompressionNote = '';
@@ -251,8 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
         binaryViewerElement.innerHTML = `Error: ${error.message}`;
         currentRequestData = null;
 
-        // Hide copy button on error
+        // Hide copy buttons on error
         copyJsonButton.classList.remove('visible');
+        copyCurlButton.classList.remove('visible');
       });
   }
 
@@ -264,14 +267,126 @@ document.addEventListener('DOMContentLoaded', () => {
       // Create a formatted version of the JSON
       const formattedJson = JSON.stringify(currentRequestData.body, null, 2);
 
-      // Copy to clipboard without showing a message
-      navigator.clipboard.writeText(formattedJson).catch((err) => {
-        console.error('Failed to copy text: ', err);
-      });
+      // Copy to clipboard
+      navigator.clipboard
+        .writeText(formattedJson)
+        .then(() => {
+          // ボタンにフィードバック効果を追加
+          copyJsonButton.classList.add('active');
+          copyJsonButton.textContent = 'Copied!';
+
+          // 元に戻す
+          setTimeout(() => {
+            copyJsonButton.classList.remove('active');
+            copyJsonButton.innerHTML = `
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy JSON
+            `;
+          }, 2000);
+        })
+        .catch((err) => {
+          console.error('Failed to copy text: ', err);
+        });
     } catch (error) {
       console.error('Error copying JSON: ', error);
     }
   });
+
+  // Copy as cURL functionality
+  copyCurlButton.addEventListener('click', () => {
+    if (!currentRequestData) return;
+
+    try {
+      const curlCommand = generateCurlCommand(currentRequestData);
+      navigator.clipboard
+        .writeText(curlCommand)
+        .then(() => {
+          // ボタンにフィードバック効果を追加
+          copyCurlButton.classList.add('active');
+          copyCurlButton.textContent = 'Copied!';
+
+          // 元に戻す
+          setTimeout(() => {
+            copyCurlButton.classList.remove('active');
+            // JSON アイコンと同じアイコンに更新
+            copyCurlButton.innerHTML = `
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy as cURL
+            `;
+          }, 2000);
+        })
+        .catch((err) => {
+          console.error('Failed to copy cURL command: ', err);
+        });
+    } catch (error) {
+      console.error('Error generating cURL command: ', error);
+    }
+  });
+
+  // Generate a cURL command from request data
+  function generateCurlCommand(requestData) {
+    // Base of the curl command
+    let command = `curl -X ${requestData.method}`;
+
+    // Determine the absolute URL
+    // This is a best effort as we don't have the actual host information
+    let urlBase = window.location.origin;
+    let path = requestData.path;
+    let url = `${urlBase}${path}`;
+
+    // Add the headers
+    if (requestData.headers) {
+      Object.entries(requestData.headers).forEach(([key, value]) => {
+        // Escape double quotes in the header value
+        const escapedValue = String(value).replace(/"/g, '\\"');
+        command += ` \\\n  -H "${key}: ${escapedValue}"`;
+      });
+    }
+
+    // Add the request body if it exists
+    if (requestData.rawBody && requestData.rawBody.trim() !== '') {
+      // Escape double quotes in the body
+      const escapedBody = requestData.rawBody.replace(/"/g, '\\"');
+
+      // For compressed data, use --data-binary to preserve binary content
+      if (requestData.isCompressed) {
+        command += ` \\\n  --data-binary "${escapedBody}"`;
+      } else {
+        command += ` \\\n  -d "${escapedBody}"`;
+      }
+    }
+
+    // Add the URL last
+    command += ` \\\n  "${url}"`;
+
+    return command;
+  }
 
   // Format headers to display one per line
   function formatHeaders(headers) {
@@ -534,6 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
           currentRequestData = null;
           // Hide copy button when logs are cleared
           copyJsonButton.classList.remove('visible');
+          copyCurlButton.classList.remove('visible');
 
           // Clear filter
           pathFilterInput.value = '';
@@ -557,8 +673,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // Initial state - hide copy button by default
+  // Initial state - hide copy buttons by default
   copyJsonButton.classList.remove('visible');
+  copyCurlButton.classList.remove('visible');
 
   // Auto-refresh every 5 seconds
   setInterval(fetchLogs, 5000);
