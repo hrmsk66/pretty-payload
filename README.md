@@ -16,56 +16,28 @@ npm install
 npm start
 ```
 
-Visit http://localhost:3000 to view the dashboard.
+## Basic Usage
 
-## Usage
+1. **Creating a New Dashboard**:
 
-Send POST requests to your server at any path.
+   - Visit `http://localhost:3000/new` to be automatically redirected to a randomly generated path like `/colorful-intelligent-cat`
+   - In this example, `colorful-intelligent-cat` becomes your `:tenantId`
 
-Example request:
+2. **Sending and Monitoring Requests**:
 
-```bash
-curl -X POST http://localhost:3000/any/path \
-  -H "Content-Type: application/json" \
-  -d '{"key": "value"}'
-```
+   - All POST requests sent to paths starting with `/:tenantId` are recorded on your dashboard
 
-### Testing Regular JSON Requests
+3. **Automatic Cleanup**:
 
-You can send a test JSON payload using curl:
-
-```bash
-curl -X POST http://localhost:3000/any/test/path \
-  -H "Content-Type: application/json" \
-  -d @tests/test.json
-```
-
-### Testing Gzipped JSON Requests
-
-To test the gzip decompression feature, you can use the pre-compressed file:
-
-```bash
-curl -X POST http://localhost:3000/any/test/path \
-  -H "Content-Type: application/json" \
-  -H "Content-Encoding: gzip" \
-  --data-binary @tests/test.json.gz
-```
-
-## Dashboard Features
-
-- **Body tab**: Displays JSON content with syntax highlighting
-- **Headers tab**: Shows all HTTP headers in a readable format
-- **Raw tab**: Shows the raw HTTP request as received by the server
-- **Binary tab**: Displays the hexadecimal and ASCII representation of the request data
+   - Any `:tenantId` not used for 7 days will be automatically deleted
 
 ## API Endpoints
 
-The tool uses the following API endpoints:
-
-- `POST /pp-api/*` - These paths are reserved for internal use
-- `GET /pp-api/logs` - Get list of all request logs
-- `GET /pp-api/logs/:id` - Get details for a specific request log
-- `DELETE /pp-api/logs` - Clear all request logs
+- `POST /:tenantId/*` - Endpoint for receiving requests
+- `GET /:tenantId/logs` - Get a list of all request logs
+- `GET /:tenantId/logs/:id` - Get details for a specific request log
+- `DELETE /:tenantId/logs` - Clear all request logs
+- `GET /api/status` - Returns the number of active tenants and server uptime
 
 ## License
 

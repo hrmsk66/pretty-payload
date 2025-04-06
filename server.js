@@ -69,8 +69,8 @@ app.use((req, res, next) => {
   });
 });
 
-// Root redirect to a new tenant - IMPORTANT: This must be defined BEFORE static file middleware
-app.get('/', (req, res) => {
+// Create new tenant and redirect
+app.get('/new', (req, res) => {
   const tenantId = tenantManager.createTenant();
   res.redirect(`/${tenantId}`);
 });
@@ -84,7 +84,7 @@ app.get('/api/status', (req, res) => {
   res.json(stats);
 });
 
-// Serve static files - Now placed AFTER the root redirect handler
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API endpoints for tenants
@@ -162,12 +162,12 @@ app.get('/:tenantId', (req, res) => {
   // Mark tenant as active
   tenantManager.touchTenant(tenantId);
 
-  // Serve the dashboard HTML
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  // Serve the dashboard HTML - now using dashboard.html instead of index.html
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
 // Logging middleware to capture tenant POST requests
-app.post('/:tenantId', (req, res) => {
+app.post(['/:tenantId', '/:tenantId/*'], (req, res) => {
   const { tenantId } = req.params;
   const tenant = tenantManager.getTenant(tenantId);
 
