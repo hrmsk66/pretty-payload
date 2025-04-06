@@ -293,7 +293,8 @@ h1::after {
 
 .compressed-badge,
 .size-badge,
-.time-badge {
+.time-badge,
+.ip-badge {
   background-color: #f0f0fa;
   padding: 3px 8px;
   border-radius: 12px;
@@ -320,6 +321,12 @@ h1::after {
 .compressed-badge {
   color: var(--glitch-purple);
   background-color: rgba(153, 51, 255, 0.1);
+}
+
+/* IP badge styling */
+.ip-badge {
+  color: var(--glitch-green);
+  background-color: rgba(12, 206, 107, 0.1);
 }
 
 /* Decompression notice styling */
@@ -536,7 +543,7 @@ h1::after {
   padding: 1.2rem;
   background-color: #fafafa;
   border-radius: 6px;
-  border: 1px solid var(--glitch-light-gray);
+  border: 1px solid var (--glitch-light-gray);
   overflow-x: auto;
   width: 100%;
   box-sizing: border-box;
@@ -573,7 +580,7 @@ h1::after {
 .path-filter {
   flex: 1;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--glitch-light-gray);
+  border: 1px solid var (--glitch-light-gray);
   border-radius: 4px;
   font-family: var(--glitch-font);
   font-size: 0.9rem;
@@ -626,7 +633,6 @@ h1::after {
 /* Inline copy button styling */
 .json-container {
   position: relative;
-  width: 100%;
 }
 
 .copy-button-inline {
@@ -640,18 +646,45 @@ h1::after {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid var(--glitch-light-gray);
   border-radius: 4px;
-  padding: 6px;
+  padding: 6px 10px;
   color: var(--glitch-gray);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   opacity: 0;
   visibility: hidden;
+  font-family: 'Quicksand', var(--glitch-font);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Hover effect */
+.copy-button-inline:hover {
+  background-color: var(--glitch-light);
+  color: var(--glitch-purple);
+  box-shadow: 0 2px 5px rgba(153, 51, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Click effect */
+.copy-button-inline:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(153, 51, 255, 0.1);
 }
 
 .copy-button-inline.visible {
   opacity: 1;
   visibility: visible;
+}
+
+/* Space between icon and text */
+.copy-button-inline svg {
+  margin-right: 5px;
+}
+
+/* Copy as cURL button specific styles */
+#copy-curl {
+  right: 10px;
 }
 
 /* Remove the old tab actions and copy button styling */
@@ -666,4 +699,188 @@ h1::after {
 /* Remove copy success message */
 .copy-success {
   display: none;
+}
+
+/* Binary viewer styling */
+.binary-viewer {
+  font-family: var(--glitch-mono-font);
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #333;
+  margin: 0;
+  padding: 1.2rem;
+  background-color: #fafafa;
+  border-radius: 6px;
+  border: 1px solid var(--glitch-light-gray);
+  overflow-x: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.binary-row {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.binary-offset {
+  color: var(--glitch-pink);
+  font-weight: bold;
+  width: 80px;
+  margin-right: 16px;
+}
+
+.binary-hex {
+  font-family: var(--glitch-mono-font);
+  color: var(--glitch-blue);
+  margin-right: 16px;
+}
+
+.binary-hex span {
+  display: inline-block;
+  width: 24px;
+  text-align: center;
+}
+
+.binary-hex span:nth-child(8n) {
+  margin-right: 8px;
+}
+
+.binary-ascii {
+  font-family: var(--glitch-mono-font);
+  color: var(--glitch-green);
+}
+
+.binary-ascii span {
+  display: inline-block;
+  width: 12px;
+  text-align: center;
+}
+
+.binary-ascii span:nth-child(8n) {
+  margin-right: 8px;
+}
+
+/* Copy button positioning in Raw view */
+#raw-pane .json-container {
+  position: relative;
+}
+
+#copy-curl {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+/* Test CURL container styling */
+.test-curl-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 1.5rem auto 0;
+  background-color: #fafafa;
+  border-radius: 6px;
+  border: 1px solid var(--glitch-light-gray);
+  overflow: hidden;
+}
+
+.test-curl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: rgba(153, 51, 255, 0.05);
+  border-bottom: 1px solid var(--glitch-light-gray);
+}
+
+.test-curl-header span {
+  font-family: 'Quicksand', var(--glitch-font);
+  font-weight: 600;
+  color: var(--glitch-purple);
+  font-size: 0.9rem;
+}
+
+.copy-curl-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--glitch-gray);
+}
+
+.copy-curl-button:hover {
+  background-color: rgba(153, 51, 255, 0.1);
+  color: var(--glitch-purple);
+}
+
+.copy-curl-button.copied {
+  background-color: var(--glitch-green);
+  color: white;
+}
+
+.copy-curl-button.copied svg {
+  display: none;
+}
+
+.copy-curl-button.copied::after {
+  content: '✓';
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.test-curl-command {
+  font-family: var(--glitch-mono-font);
+  font-size: 0.8rem;
+  color: var(--glitch-dark);
+  padding: 12px 16px;
+  margin: 0;
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 1.4;
+  background-color: #f5f5f5;
+  border-radius: 0 0 6px 6px;
+}
+
+/* Command parameters styling */
+.cmd-method {
+  color: var(--glitch-dark);
+  font-weight: normal;
+}
+
+.cmd-url {
+  color: var(--glitch-dark);
+}
+
+.cmd-header {
+  color: var(--glitch-dark);
+}
+
+.cmd-data {
+  color: var(--glitch-dark);
+}
+
+.test-curl-formatted {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  background-color: #f5f5f5;
+}
+
+.test-curl-formatted .line {
+  display: flex;
+  gap: 8px;
+}
+
+.test-curl-formatted .indent {
+  padding-left: 16px;
 }

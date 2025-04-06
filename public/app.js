@@ -5,12 +5,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const jsonViewerElement = document.getElementById('json-viewer');
   const headersViewerElement = document.getElementById('headers-viewer');
   const rawViewerElement = document.getElementById('raw-viewer');
+  const binaryViewerElement = document.getElementById('binary-viewer');
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabPanes = document.querySelectorAll('.tab-pane');
   const clearRequestsButton = document.getElementById('clear-requests');
   const pathFilterInput = document.getElementById('path-filter');
   const clearFilterButton = document.getElementById('clear-filter');
   const copyJsonButton = document.getElementById('copy-json');
+  const copyCurlButton = document.getElementById('copy-curl');
+
+  // Extract tenant ID from the URL
+  const tenantId = window.location.pathname.substring(1);
+
+  // API base path for the current tenant
+  const apiBasePath = `/api/${tenantId}`;
 
   // Currently selected log ID
   let selectedLogId = null;
@@ -51,8 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Fetch and display log list - split into fetching and rendering
   function fetchLogs() {
-    fetch('/pp-api/logs')
-      .then((response) => response.json())
+    fetch(`${apiBasePath}/logs`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((logs) => {
         // Save logs to our stored array
         if (logs.length > 0) {
@@ -75,12 +88,56 @@ document.addEventListener('DOMContentLoaded', () => {
   // Render log list with current filter applied
   function renderLogList() {
     if (storedLogs.length === 0) {
+      // Updated empty state with better formatted curl command
+      const currentUrl = `${window.location.origin}${window.location.pathname}`;
+
       logListElement.innerHTML = `
         <div class="empty-state">
           <p>No requests yet</p>
-          <p>Send any POST request to me</p>
+          <div class="test-curl-container">
+            <div class="test-curl-header">
+              <span>Try this test request:</span>
+              <button class="copy-curl-button" title="Copy command">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="test-curl-formatted">
+              <div class="line">
+                <span class="cmd-method">curl -X POST "${currentUrl}"</span>
+              </div>
+              <div class="line indent">
+                <span class="cmd-header">-H "Content-Type: application/json"</span>
+              </div>
+              <div class="line indent">
+                <span class="cmd-data">-d '{"message":"Hello, World!"}'</span>
+              </div>
+            </div>
+          </div>
         </div>
       `;
+
+      // Define the full command for copying
+      const curlCommand = `curl -X POST "${currentUrl}" -H "Content-Type: application/json" -d '{"message":"Hello, World!"}'`;
+
+      // Add click handler for the copy button
+      const copyButton = logListElement.querySelector('.copy-curl-button');
+      copyButton.addEventListener('click', () => {
+        navigator.clipboard
+          .writeText(curlCommand)
+          .then(() => {
+            copyButton.classList.add('copied');
+            setTimeout(() => {
+              copyButton.classList.remove('copied');
+            }, 2000);
+          })
+          .catch((err) => {
+            console.error('Failed to copy command: ', err);
+          });
+      });
+
       return;
     }
 
@@ -88,25 +145,32 @@ document.addEventListener('DOMContentLoaded', () => {
     logListElement.innerHTML = '';
 
     // Filter logs based on current filter
-    const filteredLogs = currentFilter
-      ? storedLogs.filter((log) => {
-          // Search in path
-          if (log.path.toLowerCase().includes(currentFilter)) {
-            return true;
-          }
+    const filteredLogs = storedLogs.filter((log) => {
+      if (!currentFilter) {
+        return true;
+      }
 
-          // Search in headers
-          const headersStr = JSON.stringify(log.headers || {}).toLowerCase();
-          if (headersStr.includes(currentFilter)) {
-            return true;
-          }
+      // Search in path
+      if (log.path.toLowerCase().includes(currentFilter)) {
+        return true;
+      }
 
-          // Remove body search to improve performance
-          // Body content is no longer searched
+      // Search in headers
+      if (
+        JSON.stringify(log.headers || {})
+          .toLowerCase()
+          .includes(currentFilter)
+      ) {
+        return true;
+      }
 
-          return false;
-        })
-      : storedLogs;
+      // Search in IP address
+      if (log.ip && log.ip.toLowerCase().includes(currentFilter)) {
+        return true;
+      }
+
+      return false;
+    });
 
     if (filteredLogs.length === 0) {
       logListElement.innerHTML = `
@@ -127,10 +191,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const timestamp = new Date(log.timestamp);
       const formattedTime = timestamp.toLocaleTimeString();
 
-      // Simplified compression badge
+      // Compression badge
       const compressionBadge = log.isCompressed
         ? `<span class="compressed-badge">Compressed</span>`
         : '';
+
+      // IP address badge
+      const ipBadge = log.ip ? `<span class="ip-badge">IP: ${log.ip}</span>` : '';
 
       logItem.innerHTML = `
         <div>
@@ -140,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="log-details">
           <span class="size-badge">Size: ${formatBytes(log.bodySize)}</span>
           ${compressionBadge}
+          ${ipBadge}
           <span class="time-badge">ReceivedAt: ${formattedTime}</span>
         </div>
       `;
@@ -181,14 +249,20 @@ document.addEventListener('DOMContentLoaded', () => {
   function fetchLogDetails(logId) {
     selectedLogId = logId;
 
-    fetch(`/pp-api/logs/${logId}`)
-      .then((response) => response.json())
+    fetch(`${apiBasePath}/logs/${logId}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((log) => {
         // Store current request data for copy functionality
         currentRequestData = log;
 
-        // Show the copy button when a log is selected
+        // Show the copy buttons when a log is selected
         copyJsonButton.classList.add('visible');
+        copyCurlButton.classList.add('visible');
 
         // Add decompression notice if applicable
         let decompressionNote = '';
@@ -213,6 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Display raw request
         if (log.rawRequest) {
           rawViewerElement.textContent = log.rawRequest;
+
+          // Display binary representation
+          binaryViewerElement.innerHTML = formatBinary(log.rawRequest);
         } else {
           // Fallback for logs that don't have rawRequest
           const rawHeaders = Object.entries(log.headers)
@@ -223,6 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const bodyStr = log.rawBody || JSON.stringify(log.body);
           const rawRequest = `${log.method} ${log.path} HTTP/1.1\n${rawHeaders}\n\n${bodyStr}`;
           rawViewerElement.textContent = rawRequest;
+
+          // Display binary representation
+          binaryViewerElement.innerHTML = formatBinary(rawRequest);
         }
       })
       .catch((error) => {
@@ -230,10 +310,12 @@ document.addEventListener('DOMContentLoaded', () => {
         jsonViewerElement.innerHTML = `Error: ${error.message}`;
         headersViewerElement.innerHTML = `Error: ${error.message}`;
         rawViewerElement.textContent = `Error: ${error.message}`;
+        binaryViewerElement.innerHTML = `Error: ${error.message}`;
         currentRequestData = null;
 
-        // Hide copy button on error
+        // Hide copy buttons on error
         copyJsonButton.classList.remove('visible');
+        copyCurlButton.classList.remove('visible');
       });
   }
 
@@ -245,14 +327,123 @@ document.addEventListener('DOMContentLoaded', () => {
       // Create a formatted version of the JSON
       const formattedJson = JSON.stringify(currentRequestData.body, null, 2);
 
-      // Copy to clipboard without showing a message
-      navigator.clipboard.writeText(formattedJson).catch((err) => {
-        console.error('Failed to copy text: ', err);
-      });
+      // Copy to clipboard
+      navigator.clipboard
+        .writeText(formattedJson)
+        .then(() => {
+          // Add feedback effect to button
+          copyJsonButton.classList.add('active');
+          copyJsonButton.textContent = 'Copied!';
+
+          // Reset after delay
+          setTimeout(() => {
+            copyJsonButton.classList.remove('active');
+            copyJsonButton.innerHTML = `
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy JSON
+            `;
+          }, 2000);
+        })
+        .catch((err) => {
+          console.error('Failed to copy text: ', err);
+        });
     } catch (error) {
       console.error('Error copying JSON: ', error);
     }
   });
+
+  // Copy as cURL functionality
+  copyCurlButton.addEventListener('click', () => {
+    if (!currentRequestData) return;
+
+    try {
+      const curlCommand = generateCurlCommand(currentRequestData);
+      navigator.clipboard
+        .writeText(curlCommand)
+        .then(() => {
+          // Add feedback effect to button
+          copyCurlButton.classList.add('active');
+          copyCurlButton.textContent = 'Copied!';
+
+          // Reset after delay
+          setTimeout(() => {
+            copyCurlButton.classList.remove('active');
+            // Update with the same icon as JSON button
+            copyCurlButton.innerHTML = `
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy as cURL
+            `;
+          }, 2000);
+        })
+        .catch((err) => {
+          console.error('Failed to copy cURL command: ', err);
+        });
+    } catch (error) {
+      console.error('Error generating cURL command: ', error);
+    }
+  });
+
+  // Generate a cURL command from request data
+  function generateCurlCommand(requestData) {
+    // Base of the curl command
+    let command = `curl -X ${requestData.method}`;
+
+    // Use the current tenant URL for the cURL command
+    let url = `${window.location.origin}${window.location.pathname}`;
+
+    // Add the headers
+    if (requestData.headers) {
+      Object.entries(requestData.headers).forEach(([key, value]) => {
+        // Escape double quotes in the header value
+        const escapedValue = String(value).replace(/"/g, '\\"');
+        command += ` \\\n  -H "${key}: ${escapedValue}"`;
+      });
+    }
+
+    // Add the request body if it exists
+    if (requestData.rawBody && requestData.rawBody.trim() !== '') {
+      // Escape double quotes in the body
+      const escapedBody = requestData.rawBody.replace(/"/g, '\\"');
+
+      // For compressed data, use --data-binary to preserve binary content
+      if (requestData.isCompressed) {
+        command += ` \\\n  --data-binary "${escapedBody}"`;
+      } else {
+        command += ` \\\n  -d "${escapedBody}"`;
+      }
+    }
+
+    // Add the URL last
+    command += ` \\\n  "${url}"`;
+
+    return command;
+  }
 
   // Format headers to display one per line
   function formatHeaders(headers) {
@@ -441,6 +632,58 @@ document.addEventListener('DOMContentLoaded', () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
 
+  // Format binary representation of data
+  function formatBinary(data) {
+    if (!data || data.length === 0) {
+      return '<span class="null">No data</span>';
+    }
+
+    let html = '';
+    const bytes = new TextEncoder().encode(data);
+    const BYTES_PER_ROW = 16;
+
+    // Process each row of bytes
+    for (let offset = 0; offset < bytes.length; offset += BYTES_PER_ROW) {
+      const rowBytes = bytes.slice(offset, offset + BYTES_PER_ROW);
+
+      // Create row container
+      html += '<div class="binary-row">';
+
+      // Add offset
+      html += `<div class="binary-offset">${offset.toString(16).padStart(8, '0')}</div>`;
+
+      // Add hex representation
+      html += '<div class="binary-hex">';
+      for (let i = 0; i < BYTES_PER_ROW; i++) {
+        if (i < rowBytes.length) {
+          html += `<span>${rowBytes[i].toString(16).padStart(2, '0')}</span>`;
+        } else {
+          html += '<span>  </span>';
+        }
+      }
+      html += '</div>';
+
+      // Add ASCII representation
+      html += '<div class="binary-ascii">';
+      for (let i = 0; i < BYTES_PER_ROW; i++) {
+        if (i < rowBytes.length) {
+          const byte = rowBytes[i];
+          // Display printable ASCII characters (32-126), replace others with a dot
+          const char = byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '.';
+          html += `<span>${escapeHTML(char)}</span>`;
+        } else {
+          html += '<span> </span>';
+        }
+      }
+      html += '</div>';
+
+      // Close row
+      html += '</div>';
+    }
+
+    return html;
+  }
+
   // Initial fetch
   fetchLogs();
 
@@ -451,10 +694,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Function to clear all logs
   function clearAllLogs() {
-    fetch('/pp-api/logs', {
+    fetch(`${apiBasePath}/logs`, {
       method: 'DELETE',
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((data) => {
         if (data.success) {
           // Clear stored logs
@@ -463,21 +711,18 @@ document.addEventListener('DOMContentLoaded', () => {
           currentRequestData = null;
           // Hide copy button when logs are cleared
           copyJsonButton.classList.remove('visible');
+          copyCurlButton.classList.remove('visible');
 
           // Clear filter
           pathFilterInput.value = '';
           currentFilter = '';
 
-          // Clear UI
-          logListElement.innerHTML = `
-            <div class="empty-state">
-              <p>No requests yet</p>
-              <p>Send any POST request to me</p>
-            </div>
-          `;
+          // Clear UI and render the empty state with test curl command
+          renderLogList();
           jsonViewerElement.innerHTML = '';
           headersViewerElement.innerHTML = '';
           rawViewerElement.textContent = '';
+          binaryViewerElement.innerHTML = '';
         }
       })
       .catch((error) => {
@@ -486,8 +731,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // Initial state - hide copy button by default
+  // Initial state - hide copy buttons by default
   copyJsonButton.classList.remove('visible');
+  copyCurlButton.classList.remove('visible');
 
   // Auto-refresh every 5 seconds
   setInterval(fetchLogs, 5000);

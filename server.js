@@ -6,13 +6,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 const zlib = require('zlib');
 const util = require('util');
+const { TenantManager } = require('./lib/tenantManager');
 
 // Promisify zlib functions
 const gunzip = util.promisify(zlib.gunzip);
 
-// Array to store request logs (limit to 100 most recent)
-const MAX_LOGS = 1000;
-const requestLogs = [];
+// Initialize the tenant manager
+const tenantManager = new TenantManager();
 
 // Make sure we get the raw body for all requests
 app.use((req, res, next) => {
@@ -69,26 +69,115 @@ app.use((req, res, next) => {
   });
 });
 
+// Create new tenant and redirect
+app.get('/new', (req, res) => {
+  const tenantId = tenantManager.createTenant();
+  res.redirect(`/${tenantId}`);
+});
+
+// For tenant health check and status
+app.get('/api/status', (req, res) => {
+  const stats = {
+    activeTenantsCount: tenantManager.getTenantsCount(),
+    uptime: process.uptime(),
+  };
+  res.json(stats);
+});
+
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Logging middleware to capture only POST requests
-app.use((req, res, next) => {
-  // Skip logging for non-POST requests
-  if (req.method !== 'POST') {
-    return next();
+// API endpoints for tenants
+// Important: Fixed route order to prevent route conflicts
+
+// API to get all request logs for a tenant
+app.get('/api/:tenantId/logs', (req, res) => {
+  const { tenantId } = req.params;
+  const tenant = tenantManager.getTenant(tenantId);
+
+  if (!tenant) {
+    return res.status(404).json({ error: 'Tenant not found' });
   }
 
-  // Skip logging for static assets and API endpoints
-  if (
-    req.path === '/' ||
-    req.path.startsWith('/styles') ||
-    req.path.startsWith('/app.js') ||
-    req.path === '/favicon.ico' ||
-    req.path.startsWith('/pp-api/')
-  ) {
-    return next();
+  // Mark tenant as active
+  tenantManager.touchTenant(tenantId);
+
+  // Sort logs with newest requests first
+  const sortedLogs = [...tenant.logs].reverse().map((log) => ({
+    id: log.id,
+    timestamp: log.timestamp,
+    method: log.method,
+    path: log.path,
+    bodySize: log.bodySize,
+    isCompressed: log.isCompressed,
+    originalSize: log.originalSize,
+    headers: log.headers,
+    ip: log.ip,
+  }));
+
+  res.json(sortedLogs);
+});
+
+// API to clear all logs for a tenant
+app.delete('/api/:tenantId/logs', (req, res) => {
+  const { tenantId } = req.params;
+  const success = tenantManager.clearTenantLogs(tenantId);
+
+  if (!success) {
+    return res.status(404).json({ error: 'Tenant not found' });
   }
+
+  res.status(200).json({ success: true, message: 'All logs cleared' });
+});
+
+// API to get a specific log by ID for a tenant
+app.get('/api/:tenantId/logs/:logId', (req, res) => {
+  const { tenantId, logId } = req.params;
+  const tenant = tenantManager.getTenant(tenantId);
+
+  if (!tenant) {
+    return res.status(404).json({ error: 'Tenant not found' });
+  }
+
+  // Mark tenant as active
+  tenantManager.touchTenant(tenantId);
+
+  const log = tenant.logs.find((log) => log.id === logId);
+  if (!log) {
+    return res.status(404).json({ error: 'Log not found' });
+  }
+
+  res.json(log);
+});
+
+// Serve the dashboard for a specific tenant
+app.get('/:tenantId', (req, res) => {
+  const { tenantId } = req.params;
+
+  // Check if tenant exists
+  if (!tenantManager.getTenant(tenantId)) {
+    return res.status(404).send('Tenant not found');
+  }
+
+  // Mark tenant as active
+  tenantManager.touchTenant(tenantId);
+
+  // Serve the dashboard HTML - now using dashboard.html instead of index.html
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+// Logging middleware to capture tenant POST requests
+app.post(['/:tenantId', '/:tenantId/*'], (req, res) => {
+  const { tenantId } = req.params;
+  const tenant = tenantManager.getTenant(tenantId);
+
+  // Check if tenant exists
+  if (!tenant) {
+    return res.status(404).send('Tenant not found');
+  }
+
+  // Mark tenant as active
+  tenantManager.touchTenant(tenantId);
 
   // Format headers into raw HTTP-like format
   const rawHeaders = Object.entries(req.headers)
@@ -101,6 +190,9 @@ app.use((req, res, next) => {
 
   // For raw request display, use the raw (compressed) content
   const rawRequest = `${req.method} ${req.path} HTTP/1.1\n${rawHeaders}\n\n${bodyStr}`;
+
+  // Get client IP address
+  const ip = req.headers['fastly-client-ip'] || req.connection.remoteAddress || req.ip || '';
 
   // Capture request data
   const requestData = {
@@ -119,52 +211,18 @@ app.use((req, res, next) => {
       req.isCompressed && req.decompressedBody
         ? Buffer.byteLength(req.decompressedBody, 'utf8')
         : bodySize,
+    ip: ip,
   };
 
-  // Store logs
-  requestLogs.push(requestData);
+  // Store logs with the tenant manager
+  tenantManager.addRequestLog(tenantId, requestData);
 
-  // Trim logs if they exceed maximum count
-  if (requestLogs.length > MAX_LOGS) {
-    requestLogs.splice(0, requestLogs.length - MAX_LOGS);
-  }
-
-  // Simplify response to just return path and size with a more natural phrasing
+  // Respond with confirmation
   res.status(200).send(`Request to ${req.path} received (${bodySize} bytes)`);
 });
 
-// API to get all request logs
-app.get('/pp-api/logs', (req, res) => {
-  // Sort logs with newest requests first
-  const sortedLogs = [...requestLogs].reverse().map((log) => ({
-    id: log.id,
-    timestamp: log.timestamp,
-    method: log.method,
-    path: log.path,
-    bodySize: log.bodySize,
-    isCompressed: log.isCompressed,
-    originalSize: log.originalSize,
-    headers: log.headers,
-  }));
-
-  res.json(sortedLogs);
-});
-
-// API to clear all logs
-app.delete('/pp-api/logs', (req, res) => {
-  // Clear the logs array
-  requestLogs.length = 0;
-  res.status(200).json({ success: true, message: 'All logs cleared' });
-});
-
-// API to get a specific log by ID
-app.get('/pp-api/logs/:id', (req, res) => {
-  const log = requestLogs.find((log) => log.id === req.params.id);
-  if (!log) {
-    return res.status(404).json({ error: 'Log not found' });
-  }
-  res.json(log);
-});
+// Start housekeeping task for tenant cleanup
+tenantManager.startHousekeeping();
 
 // Start the server
 app.listen(port, () => {

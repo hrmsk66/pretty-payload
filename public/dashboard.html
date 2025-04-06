@@ -33,7 +33,7 @@
             type="text"
             id="path-filter"
             class="path-filter"
-            placeholder="Filter by path or headers..."
+            placeholder="Filter by path, headers or IP..."
             autocomplete="off"
           />
           <button id="clear-filter" class="clear-filter-button" title="Clear filter">×</button>
@@ -48,6 +48,7 @@
           <button class="tab-button active" data-tab="body">Body</button>
           <button class="tab-button" data-tab="headers">Headers</button>
           <button class="tab-button" data-tab="raw">Raw</button>
+          <button class="tab-button" data-tab="binary">Binary</button>
         </div>
 
         <div class="tab-content">
@@ -68,6 +69,7 @@
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                 </svg>
+                Copy JSON
               </button>
               <pre id="json-viewer" class="json-viewer"></pre>
             </div>
@@ -76,7 +78,29 @@
             <pre id="headers-viewer" class="json-viewer"></pre>
           </div>
           <div class="tab-pane" id="raw-pane">
-            <pre id="raw-viewer" class="raw-viewer"></pre>
+            <div class="json-container">
+              <button id="copy-curl" class="copy-button-inline" title="Copy as cURL">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Copy as cURL
+              </button>
+              <pre id="raw-viewer" class="raw-viewer"></pre>
+            </div>
+          </div>
+          <div class="tab-pane" id="binary-pane">
+            <pre id="binary-viewer" class="binary-viewer"></pre>
           </div>
         </div>
       </div>
