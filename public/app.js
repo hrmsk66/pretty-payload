@@ -14,6 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyJsonButton = document.getElementById('copy-json');
   const copyCurlButton = document.getElementById('copy-curl');
 
+  // Extract tenant ID from the URL
+  const tenantId = window.location.pathname.substring(1);
+
+  // API base path for the current tenant
+  const apiBasePath = `/api/${tenantId}`;
+
   // Currently selected log ID
   let selectedLogId = null;
   // Store logs to prevent clearing
@@ -53,8 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Fetch and display log list - split into fetching and rendering
   function fetchLogs() {
-    fetch('/pp-api/logs')
-      .then((response) => response.json())
+    fetch(`${apiBasePath}/logs`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((logs) => {
         // Save logs to our stored array
         if (logs.length > 0) {
@@ -77,12 +88,56 @@ document.addEventListener('DOMContentLoaded', () => {
   // Render log list with current filter applied
   function renderLogList() {
     if (storedLogs.length === 0) {
+      // Updated empty state with better formatted curl command
+      const currentUrl = `${window.location.origin}${window.location.pathname}`;
+
       logListElement.innerHTML = `
         <div class="empty-state">
           <p>No requests yet</p>
-          <p>Send any POST request to me</p>
+          <div class="test-curl-container">
+            <div class="test-curl-header">
+              <span>Try this test request:</span>
+              <button class="copy-curl-button" title="Copy command">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="test-curl-formatted">
+              <div class="line">
+                <span class="cmd-method">curl -X POST "${currentUrl}"</span>
+              </div>
+              <div class="line indent">
+                <span class="cmd-header">-H "Content-Type: application/json"</span>
+              </div>
+              <div class="line indent">
+                <span class="cmd-data">-d '{"message":"Hello, World!"}'</span>
+              </div>
+            </div>
+          </div>
         </div>
       `;
+
+      // Define the full command for copying
+      const curlCommand = `curl -X POST "${currentUrl}" -H "Content-Type: application/json" -d '{"message":"Hello, World!"}'`;
+
+      // Add click handler for the copy button
+      const copyButton = logListElement.querySelector('.copy-curl-button');
+      copyButton.addEventListener('click', () => {
+        navigator.clipboard
+          .writeText(curlCommand)
+          .then(() => {
+            copyButton.classList.add('copied');
+            setTimeout(() => {
+              copyButton.classList.remove('copied');
+            }, 2000);
+          })
+          .catch((err) => {
+            console.error('Failed to copy command: ', err);
+          });
+      });
+
       return;
     }
 
@@ -194,8 +249,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function fetchLogDetails(logId) {
     selectedLogId = logId;
 
-    fetch(`/pp-api/logs/${logId}`)
-      .then((response) => response.json())
+    fetch(`${apiBasePath}/logs/${logId}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((log) => {
         // Store current request data for copy functionality
         currentRequestData = log;
@@ -271,11 +331,11 @@ document.addEventListener('DOMContentLoaded', () => {
       navigator.clipboard
         .writeText(formattedJson)
         .then(() => {
-          // ボタンにフィードバック効果を追加
+          // Add feedback effect to button
           copyJsonButton.classList.add('active');
           copyJsonButton.textContent = 'Copied!';
 
-          // 元に戻す
+          // Reset after delay
           setTimeout(() => {
             copyJsonButton.classList.remove('active');
             copyJsonButton.innerHTML = `
@@ -314,14 +374,14 @@ document.addEventListener('DOMContentLoaded', () => {
       navigator.clipboard
         .writeText(curlCommand)
         .then(() => {
-          // ボタンにフィードバック効果を追加
+          // Add feedback effect to button
           copyCurlButton.classList.add('active');
           copyCurlButton.textContent = 'Copied!';
 
-          // 元に戻す
+          // Reset after delay
           setTimeout(() => {
             copyCurlButton.classList.remove('active');
-            // JSON アイコンと同じアイコンに更新
+            // Update with the same icon as JSON button
             copyCurlButton.innerHTML = `
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -354,11 +414,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Base of the curl command
     let command = `curl -X ${requestData.method}`;
 
-    // Determine the absolute URL
-    // This is a best effort as we don't have the actual host information
-    let urlBase = window.location.origin;
-    let path = requestData.path;
-    let url = `${urlBase}${path}`;
+    // Use the current tenant URL for the cURL command
+    let url = `${window.location.origin}${window.location.pathname}`;
 
     // Add the headers
     if (requestData.headers) {
@@ -637,10 +694,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Function to clear all logs
   function clearAllLogs() {
-    fetch('/pp-api/logs', {
+    fetch(`${apiBasePath}/logs`, {
       method: 'DELETE',
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((data) => {
         if (data.success) {
           // Clear stored logs
@@ -655,16 +717,12 @@ document.addEventListener('DOMContentLoaded', () => {
           pathFilterInput.value = '';
           currentFilter = '';
 
-          // Clear UI
-          logListElement.innerHTML = `
-            <div class="empty-state">
-              <p>No requests yet</p>
-              <p>Send any POST request to me</p>
-            </div>
-          `;
+          // Clear UI and render the empty state with test curl command
+          renderLogList();
           jsonViewerElement.innerHTML = '';
           headersViewerElement.innerHTML = '';
           rawViewerElement.textContent = '';
+          binaryViewerElement.innerHTML = '';
         }
       })
       .catch((error) => {

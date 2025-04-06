@@ -1,7 +1,7 @@
 {
   "name": "pretty-payload",
   "version": "1.0.0",
-  "description": "Request log server running on Glitch",
+  "description": "Request log server running on Glitch with tenant isolation",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
