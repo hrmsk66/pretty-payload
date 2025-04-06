@@ -161,46 +161,37 @@ h1::after {
 }
 
 .clear-button {
-  background-color: var(--glitch-pink);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 1px solid var(--glitch-light-gray);
   border-radius: 4px;
-  font-weight: 500;
+  padding: 6px 10px;
+  color: var(--glitch-gray);
+  font-weight: 600;
+  font-size: 0.85rem;
   font-family: 'Quicksand', var(--glitch-font);
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(255, 69, 139, 0.3);
-  position: relative;
-  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .clear-button:hover {
-  background-color: #ff2d7a;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(255, 69, 139, 0.4);
+  background-color: var(--glitch-light);
+  color: var(--glitch-purple);
+  box-shadow: 0 2px 5px rgba(153, 51, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .clear-button:active {
   transform: translateY(1px);
-  box-shadow: 0 1px 2px rgba(255, 69, 139, 0.3);
+  box-shadow: 0 1px 2px rgba(153, 51, 255, 0.1);
 }
 
-/* Shimmer effect for the clear button */
 .clear-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: all 0.6s ease;
-}
-
-.clear-button:hover::before {
-  left: 100%;
+  display: none;
 }
 
 .log-list {
@@ -242,33 +233,38 @@ h1::after {
 
 .log-method {
   display: inline-block;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-family: 'Poppins', var(--glitch-font);
-  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Quicksand', var(--glitch-font);
+  color: var(--glitch-dark);
   margin-right: 0.5rem;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  background-color: white;
+  border: 2px solid rgba(0, 0, 0, 0.7);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.5px;
 }
 
-/* HTTP method badges styling */
+/* HTTP method badges styling - use border colors instead of backgrounds */
 .log-method.post {
-  background: linear-gradient(135deg, var(--glitch-green), #09b35f);
+  border-color: var(--glitch-green);
+  color: var(--glitch-green);
 }
 
 .log-method.get {
-  background: linear-gradient(135deg, var(--glitch-blue), #1a9ccd);
+  border-color: var(--glitch-blue);
+  color: var(--glitch-blue);
 }
 
 .log-method.put {
-  background: linear-gradient(135deg, var(--glitch-yellow), #e0b400);
-  color: #333;
+  border-color: var(--glitch-yellow);
+  color: #b38d00;
 }
 
 .log-method.delete {
-  background: linear-gradient(135deg, var(--glitch-pink), #ff2d7a);
+  border-color: var(--glitch-pink);
+  color: var(--glitch-pink);
 }
 
 .log-path {
@@ -295,38 +291,44 @@ h1::after {
 .size-badge,
 .time-badge,
 .ip-badge {
-  background-color: #f0f0fa;
-  padding: 3px 8px;
+  background-color: white;
+  padding: 4px 10px;
   border-radius: 12px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   display: inline-flex;
   align-items: center;
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  font-family: 'Quicksand', var(--glitch-font);
+  color: var(--glitch-dark);
   position: relative;
+  margin-right: 4px;
+  letter-spacing: 0.3px;
 }
 
-.size-badge {
-  color: var(--glitch-blue);
-  background-color: rgba(46, 174, 219, 0.1);
+.size-badge::before {
+  content: '📦 ';
+  margin-right: 3px;
+  font-size: 0.8rem;
 }
 
-.time-badge {
-  color: var(--glitch-pink);
-  background-color: rgba(255, 69, 139, 0.1);
+.time-badge::before {
+  content: '⏱️ ';
+  margin-right: 3px;
+  font-size: 0.8rem;
 }
 
-/* Compression badge styling */
-.compressed-badge {
-  color: var(--glitch-purple);
-  background-color: rgba(153, 51, 255, 0.1);
+.compressed-badge::before {
+  content: '✨️ ';
+  margin-right: 3px;
+  font-size: 0.8rem;
 }
 
-/* IP badge styling */
-.ip-badge {
-  color: var(--glitch-green);
-  background-color: rgba(12, 206, 107, 0.1);
+.ip-badge::before {
+  content: '🌐 ';
+  margin-right: 3px;
+  font-size: 0.8rem;
 }
 
 /* Decompression notice styling */
