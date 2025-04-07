@@ -89,6 +89,11 @@ app.get('/api/status', (req, res) => {
   res.json(stats);
 });
 
+// Handler for Fastly logging challenge
+app.get('/.well-known/fastly/logging/challenge', (req, res) => {
+  res.send('*');
+});
+
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
